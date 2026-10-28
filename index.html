@@ -1,143 +1,222 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Motion Studio</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Motion Studio — 기획부터 AE까지, 한 화면에서</title>
+<meta name="description" content="아이디어 한 줄로 시작해 캐릭터 · 스타일프레임 · 스토리보드 · 샷 이미지 · 영상 · 편집까지 8단계를 이어서 만드는 AI 모션그래픽 작업실." />
+<meta property="og:title" content="AI Motion Studio" />
+<meta property="og:description" content="기획부터 After Effects까지, AI 모션그래픽을 한 화면에서." />
+<meta property="og:image" content="media/slide1.png" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root { --bg: #f3f5f9; --surface: #fff; --ink: #0e1424; --muted: #5b6478; --faint: #8a93a6; --line: #e3e7ef; --accent: #2f6bf2; --accent-text: #2558d6; --soft: #ebf1ff; --navy: #0f1c3f; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #0b0f17; --surface: #121826; --ink: #eef2f8; --muted: #a3acbf; --faint: #6f7a90; --line: #232b3e; --accent: #5b8dff; --accent-text: #8fb0ff; --soft: #16223d; --navy: #1b2a52; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; letter-spacing: -0.015em; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+  .mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(135deg, #4b82ff, #2f6bf2); box-shadow: 0 6px 16px rgba(47, 107, 242, .3); flex: none; }
+  .mark svg { width: 19px; height: 19px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 22px; border-radius: 12px; font-weight: 700; font-size: 16px; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary { background: var(--navy); color: #fff; box-shadow: 0 10px 24px rgba(15, 28, 63, .2); }
+  .btn.ghost { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+  .btn.small { height: 38px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
+
+  header.nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+  header.nav .wrap { display: flex; align-items: center; gap: 12px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; text-decoration: none; }
+  .nav-links { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 14.5px; font-weight: 600; color: var(--muted); }
+  .nav-links a { text-decoration: none; }
+  .nav-links a:hover { color: var(--ink); }
+
+  .hero { padding: 72px 0 40px; text-align: center; background: radial-gradient(900px 420px at 50% -10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
+  .eyebrow { display: inline-block; padding: 6px 14px; border-radius: 99px; background: var(--soft); color: var(--accent-text); font-size: 14px; font-weight: 700; }
+  h1 { margin: 20px 0 0; font-size: clamp(38px, 6vw, 68px); line-height: 1.12; letter-spacing: -0.045em; font-weight: 800; }
+  .lead { max-width: 680px; margin: 20px auto 0; font-size: clamp(16px, 2vw, 19px); color: var(--muted); }
+  .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 32px; }
+  .note { margin-top: 14px; font-size: 13.5px; color: var(--faint); }
+
+  .video { margin: 44px auto 0; max-width: 1040px; border-radius: 20px; overflow: hidden; background: #000; box-shadow: 0 30px 80px rgba(15, 28, 63, .2), 0 0 0 1px var(--line); }
+  .video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+
+  section { padding: 80px 0 0; }
+  .sec-head { text-align: center; max-width: 720px; margin: 0 auto 36px; }
+  .sec-head h2 { margin: 12px 0 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.2; letter-spacing: -0.04em; }
+  .sec-head p { margin: 12px 0 0; color: var(--muted); }
+
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .step { padding: 18px; border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+  .step b { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--soft); color: var(--accent-text); font-size: 14px; }
+  .step h3 { margin: 10px 0 4px; font-size: 17px; }
+  .step p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+  .gallery { display: grid; gap: 28px; }
+  .shot { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .shot a { display: block; border-radius: 18px; overflow: hidden; box-shadow: 0 20px 50px rgba(15, 28, 63, .12), 0 0 0 1px var(--line); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 18px; }
+  .tabs button { height: 38px; padding: 0 16px; border: 0; border-radius: 99px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); font: inherit; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .tabs button.on { background: var(--navy); color: #fff; box-shadow: none; }
+
+  .ways { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .way { padding: 30px; border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 10px; }
+  .way.feature { box-shadow: 0 0 0 2px var(--accent); }
+  .way h3 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+  .way .tag { align-self: flex-start; padding: 3px 10px; border-radius: 99px; background: var(--soft); color: var(--accent-text); font-size: 12.5px; font-weight: 700; }
+  .way ul { margin: 4px 0 8px; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .way li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 15px; color: var(--muted); }
+  .way li::before { content: "✓"; color: var(--accent); font-weight: 800; }
+  .way li.no::before { content: "–"; color: var(--faint); }
+  .way .btn { margin-top: auto; align-self: flex-start; }
+
+  .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
+  details { border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 16px 20px; }
+  summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::after { content: "+"; color: var(--faint); font-weight: 400; font-size: 20px; line-height: 1; }
+  details[open] summary::after { content: "–"; }
+  details p { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+
+  footer { margin-top: 90px; padding: 32px 0 48px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13.5px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+
+  @media (max-width: 860px) {
+    .steps { grid-template-columns: repeat(2, 1fr); }
+    .ways { grid-template-columns: 1fr; }
+    .nav-links a.hide-sm { display: none; }
+  }
+  @media (max-width: 480px) {
+    .wrap { padding: 0 16px; }
+    .hero { padding-top: 48px; }
+    .btn { width: 100%; }
+    .steps { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></span>AI Motion Studio</div>
 
-    <nav class="tabs" role="tablist" aria-label="메뉴">
-      <button class="tab active" data-tab="home" data-desc="다음에 할 일을 알려드려요">
-        <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>홈 · 작업 현황</span></button>
-      <button class="tab" data-tab="plan" data-step="plan"><i class="step-no">1</i><span>기획</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="chars" data-step="chars"><i class="step-no">2</i><span>캐릭터 시트</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="style" data-step="style"><i class="step-no">3</i><span>스타일프레임</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="board" data-step="board"><i class="step-no">4</i><span>스토리보드</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="shots" data-step="shots"><i class="step-no">5</i><span>샷 이미지</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="select" data-step="select"><i class="step-no">6</i><span>애니메틱</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="video" data-step="video"><i class="step-no">7</i><span>영상화</span><em class="nav-badge"></em></button>
-      <button class="tab" data-tab="edit" data-step="edit"><i class="step-no">8</i><span>편집 · AE</span><em class="nav-badge"></em></button>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#"><span class="mark"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></span>AI Motion Studio</a>
+    <nav class="nav-links">
+      <a class="hide-sm" href="#flow">작업 흐름</a>
+      <a class="hide-sm" href="#screens">화면</a>
+      <a class="hide-sm" href="#start">시작하기</a>
+      <a class="btn primary small" href="app/">앱 열기</a>
     </nav>
+  </div>
+</header>
 
-    <div class="side-sec">
-      <div class="side-label">최근 프로젝트 <button id="newProjectBtn" class="icon-btn side-add" type="button" title="새 프로젝트" aria-label="새 프로젝트">＋</button></div>
-      <div id="projectList" class="project-list"></div>
-      <div class="project-tools">
-        <select id="projectSelect" aria-label="모든 프로젝트" title="모든 프로젝트"></select>
-        <button id="exportBtn" class="icon-btn" title="백업 내보내기" aria-label="백업 내보내기">
-          <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg></button>
-        <button id="importBtn" class="icon-btn" title="백업 가져오기" aria-label="백업 가져오기">
-          <svg viewBox="0 0 24 24"><path d="M12 15V3m0 0L8 7m4-4 4 4M5 21h14"/></svg></button>
-        <button id="deleteProjectBtn" class="icon-btn danger" title="지금 프로젝트 삭제" aria-label="프로젝트 삭제">
-          <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+<main>
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow">AI 모션그래픽 작업실</span>
+      <h1>기획부터 AE까지,<br />한 화면에서</h1>
+      <p class="lead">아이디어 한 줄로 시작해 캐릭터 · 스타일프레임 · 스토리보드 · 샷 이미지 · 영상 · 편집까지. 8단계를 끊기지 않고 이어 가는 AI 모션그래픽 작업 앱이에요.</p>
+      <div class="ctas">
+        <a class="btn primary" href="app/">웹에서 바로 써 보기 →</a>
+        <a class="btn ghost" href="app/AI-Motion-Studio.zip" download>⬇ 전체 버전 내려받기</a>
       </div>
-      <input id="importFile" type="file" accept="application/json,.json" hidden />
+      <p class="note">회원가입 없음 · 내 AI 계정(API 키)으로 · 작업은 내 브라우저에만 저장</p>
+      <div class="video">
+        <video src="media/intro.mp4" poster="media/intro-poster.jpg" controls playsinline preload="metadata" aria-label="AI Motion Studio 소개 영상"></video>
+      </div>
     </div>
+  </div>
 
-  </aside>
-
-  <main>
-    <div class="topbar">
-      <div class="search" role="search">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="globalSearch" type="search" placeholder="프로젝트, 컷, 단계, 용어를 검색해 보세요…" autocomplete="off" aria-label="검색" />
-        <kbd>Ctrl K</kbd>
-        <div id="searchResults" class="search-results" hidden></div>
+  <section id="flow">
+    <div class="wrap">
+      <div class="sec-head"><span class="eyebrow">작업 흐름</span><h2>아이디어 한 줄에서 최종 편집까지</h2><p>단계마다 앞 단계의 결과를 이어받아요. 기획이 바뀌면 다음 단계에 물어보고 반영하고요.</p></div>
+      <div class="steps">
+        <div class="step"><b>1</b><h3>기획</h3><p>주제만 적으면 컨셉 · 팔레트 · 시나리오. 레퍼런스 스타일 분석과 추천까지</p></div>
+        <div class="step"><b>2</b><h3>캐릭터 시트</h3><p>기준 이미지로 3면도 · 표정 · 소품 시트. 프롬프트에 @이름으로 불러 써요</p></div>
+        <div class="step"><b>3</b><h3>스타일프레임</h3><p>모든 컷의 룩을 정하는 대표 장면 한 장</p></div>
+        <div class="step"><b>4</b><h3>스토리보드</h3><p>컷별 구도 스케치와 카메라 · 전환 메모</p></div>
+        <div class="step"><b>5</b><h3>샷 이미지</h3><p>스케치 구도 그대로. 한글로 쓰고, 말로 고치고, 영문화까지</p></div>
+        <div class="step"><b>6</b><h3>애니메틱</h3><p>타임라인에서 순서 · 길이 · 카메라 무빙을 바로 확인</p></div>
+        <div class="step"><b>7</b><h3>영상화</h3><p>컷별로, 또는 여러 컷을 한 영상으로. 길이 · 사이즈 · 엔드 프레임</p></div>
+        <div class="step"><b>8</b><h3>편집 · AE</h3><p>속도 · 리버스 · 메모로 러프 편집, After Effects 패키지로 내보내기</p></div>
       </div>
-      <span class="spacer"></span>
-      <button id="settingsBtn" class="ai-pill" type="button" title="AI 연결">
-        <span class="ai-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M4.9 19.1 7 17m10-10 2.1-2.1"/></svg></span>
-        <span id="aiLabel">AI 연결</span><span id="aiStatus" class="status-dot" aria-hidden="true"></span>
-      </button>
     </div>
-    <header class="page-head">
-      <div class="ph-text">
-        <span id="pageStep" class="page-step"></span>
-        <h1 id="pageTitle">작업 현황</h1>
-        <p id="pageDesc" class="page-desc"></p>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="sec-head"><span class="eyebrow">화면</span><h2>이렇게 생겼어요</h2></div>
+      <div class="tabs" role="tablist" aria-label="화면 고르기">
+        <button type="button" class="on" data-shot="2">전체 흐름</button>
+        <button type="button" data-shot="3">기획</button>
+        <button type="button" data-shot="4">캐릭터 · 스타일</button>
+        <button type="button" data-shot="5">스토리보드 · 샷</button>
+        <button type="button" data-shot="6">애니메틱</button>
+        <button type="button" data-shot="7">영상화 · 편집</button>
       </div>
-      <div id="pageSide" class="ph-side"></div>
-    </header>
+      <div class="shot"><a id="shotLink" href="media/slide2.png" target="_blank" rel="noopener"><img id="shotImg" src="media/slide2.png" alt="AI Motion Studio 화면" width="1920" height="1080" /></a></div>
+    </div>
+  </section>
 
-    <section id="tab-home" class="panel active"><div id="homeBody"></div></section>
-
-    <!-- 1 기획 -->
-    <section id="tab-plan" class="panel">
-      <div class="plan-layout">
-        <form id="planForm" class="card plan-input" autocomplete="off">
-          <label>주제 <input name="topic" placeholder="예: 친환경 텀블러 신제품 런칭" /></label>
-          <label>목적 <input name="purpose" list="purposeList" placeholder="예: 인스타그램 광고" /></label>
-          <datalist id="purposeList"></datalist>
-          <label>느낌 <input name="mood" placeholder="예: 경쾌하고 미니멀, 아침 햇살" /></label>
-          <div class="row">
-            <label>길이(초) <input name="runtime" type="number" min="3" max="600" step="1" list="runtimeList" placeholder="30" /></label>
-            <datalist id="runtimeList"></datalist>
-            <label>비율 <select name="ratio"><option>16:9</option><option>9:16</option><option>1:1</option></select></label>
-          </div>
-          <label>메모 <input name="notes" placeholder="타깃, 꼭 넣을 것 (선택)" /></label>
-          <span class="field-label">레퍼런스 <em>이미지마다 쓰임을 골라요 (🎨 스타일 · 📦 등장 대상 · 📐 구도) · 최대 9장</em></span>
-          <div id="planRefs" class="ref-grid"></div>
-          <button type="button" id="generatePlanBtn" class="btn primary-lg">✨ 기획안 만들기</button>
-          <button type="button" class="btn ghost full" data-autopilot title="기획 → 스토리보드 → 스타일프레임 → 캐릭터 → 샷 프롬프트·이미지까지">끝까지 자동 진행</button>
-        </form>
-
-        <div id="planResult" class="card plan-result" aria-live="polite"></div>
+  <section id="start">
+    <div class="wrap">
+      <div class="sec-head"><span class="eyebrow">시작하기</span><h2>두 가지 방법으로 쓸 수 있어요</h2></div>
+      <div class="ways">
+        <div class="way">
+          <span class="tag">가장 쉬움</span>
+          <h3>웹에서 바로</h3>
+          <ul>
+            <li>설치 없이 링크로 열기</li>
+            <li>OpenAI · Gemini · Claude <b>API 키</b>로 기획 · 프롬프트 · 이미지</li>
+            <li>Higgsfield · Midjourney 등은 <b>웹에서 직접</b> (프롬프트 복사 → 사이트)</li>
+            <li class="no">구독 연결 · Higgsfield 자동 생성은 내려받은 버전에서</li>
+          </ul>
+          <a class="btn primary" href="app/">앱 열기 →</a>
+        </div>
+        <div class="way feature">
+          <span class="tag">모든 기능</span>
+          <h3>내려받아 실행</h3>
+          <ul>
+            <li><b>Claude · ChatGPT · Gemini 구독</b>을 그대로 연결</li>
+            <li><b>Higgsfield</b> 이미지 · 영상 자동 생성</li>
+            <li>Node.js 설치 후 <b>start.cmd</b>(Mac: start.command) 더블클릭</li>
+            <li>작업과 키는 내 컴퓨터에만</li>
+          </ul>
+          <a class="btn ghost" href="app/AI-Motion-Studio.zip" download>⬇ 내려받기 (zip)</a>
+        </div>
       </div>
-      <div class="stage-next" data-next="chars"></div>
-    </section>
+    </div>
+  </section>
 
-    <section id="tab-chars" class="panel"><div id="charsBody"></div><div class="stage-next" data-next="style"></div></section>
-    <section id="tab-style" class="panel"><div id="styleBody"></div><div class="stage-next" data-next="board"></div></section>
-    <section id="tab-board" class="panel"><div id="boardBody"></div><div class="stage-next" data-next="shots"></div></section>
-    <section id="tab-shots" class="panel"><div id="shotsBody"></div><div class="stage-next" data-next="select"></div></section>
-
-    <!-- 6 애니메틱 -->
-    <section id="tab-select" class="panel">
-      <div id="nle" class="nle"></div>
-      <div class="stage-next" data-next="video"></div>
-    </section>
-
-    <section id="tab-video" class="panel"><div id="videoBody"></div><div class="stage-next" data-next="edit"></div></section>
-    <section id="tab-edit" class="panel"><div id="editBody"></div></section>
-  </main>
-</div>
-
-  <input id="mediaFile" type="file" multiple hidden />
-  <dialog id="lightbox" class="lightbox" aria-label="크게 보기">
-    <figure><img alt="" hidden /><video controls playsinline hidden></video><figcaption></figcaption></figure>
-  </dialog>
-
-  <dialog id="settingsDialog" class="modal settings-modal" aria-labelledby="settingsTitle">
-    <form method="dialog">
-      <div class="settings-top">
-        <h2 id="settingsTitle">AI 연결</h2>
-        <p class="hint">내 계정 · 내 키로 연결해요. 같이 쓰는 사람도 각자 자기 AI를 연결하면 돼요. <a href="시작하기.html" target="_blank" rel="noopener">처음 쓰는 분 안내</a></p>
+  <section>
+    <div class="wrap">
+      <div class="sec-head"><span class="eyebrow">자주 묻는 것</span><h2>궁금한 점</h2></div>
+      <div class="faq">
+        <details><summary>회원가입이 필요한가요?</summary><p>아니요. 앱은 계정이 없어요. AI는 각자 쓰는 서비스의 API 키나 구독으로 연결해요.</p></details>
+        <details><summary>내 작업은 어디에 저장돼요?</summary><p>지금 쓰는 브라우저 안에만 저장돼요. 다른 컴퓨터로 옮기려면 왼쪽 아래 ⬇ 백업 내보내기 → 다른 곳에서 ⬆ 가져오기를 쓰세요. API 키는 백업에 들어가지 않아요.</p></details>
+        <details><summary>요금이 드나요?</summary><p>앱은 무료예요. AI를 쓰는 만큼 각자 연결한 서비스(API · Higgsfield 크레딧 등)에서 요금이 나가요. 작업 현황에서 단계별 크레딧 사용량을 볼 수 있어요.</p></details>
+        <details><summary>휴대폰에서도 되나요?</summary><p>열리긴 하지만 타임라인 편집 등은 큰 화면에 맞춰져 있어요. 컴퓨터 브라우저(Chrome · Edge · Safari)를 권해요.</p></details>
       </div>
-      <div id="settingsBody" class="settings-body"></div>
-      <div class="modal-actions">
-        <button value="cancel" class="btn ghost">닫기</button>
-        <button type="button" id="saveKeyBtn" class="btn">저장</button>
-      </div>
-    </form>
-  </dialog>
+    </div>
+  </section>
+</main>
 
-  <dialog id="refDialog" class="modal ref-modal" aria-labelledby="refDialogTitle">
-    <form method="dialog">
-      <h2 id="refDialogTitle">레퍼런스 고르기</h2>
-      <div id="refDialogBody"></div>
-      <div class="modal-actions"><button value="done" class="btn">완료</button></div>
-    </form>
-  </dialog>
+<footer>
+  <div class="wrap">
+    <span>AI Motion Studio</span>
+    <span><a href="app/">앱 열기</a> · <a href="app/시작하기.html">자세한 시작 안내</a></span>
+  </div>
+</footer>
 
-  <div id="toast" class="toast" hidden></div>
-
-  <script src="data/knowledge.js"></script>
-  <script src="app.js"></script>
+<script>
+  // 화면 탭: 소개 이미지 바꾸기
+  document.querySelectorAll("[data-shot]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("[data-shot]").forEach((x) => x.classList.toggle("on", x === b));
+    const src = `media/slide${b.dataset.shot}.png`;
+    document.getElementById("shotImg").src = src;
+    document.getElementById("shotLink").href = src;
+  }));
+</script>
 </body>
 </html>

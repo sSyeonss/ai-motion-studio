@@ -140,7 +140,8 @@
   // 프로젝트가 가진 모든 이미지·영상 id
   const mediaIds = (p) => [
     ...p.plan.images, ...p.style.images, ...p.characters.flatMap((c) => [...c.refs, ...c.images]),
-    ...p.shots.flatMap((s) => [...s.images, ...s.videos, ...s.refFiles, ...s.endImages]), ...p.logs.flatMap((l) => arr(l.images))
+    ...p.shots.flatMap((s) => [...s.images, ...s.videos, ...s.refFiles, ...s.endImages]), ...p.logs.flatMap((l) => arr(l.images)),
+    ...arr(p.combo?.videos) // 여러 컷 → 영상 1개
   ];
   const allMediaIds = (projects) => projects.flatMap(mediaIds);
 
@@ -432,6 +433,7 @@
     const p = current();
     if (key === "plan") return p.plan;
     if (key === "style") return p.style;
+    if (key === "combo") return comboOf(p);
     const [kind, id] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)];
     const list = { char: p.characters, shot: p.shots, log: p.logs }[kind] || [];
     return list.find((x) => String(x.id) === id);
@@ -478,6 +480,8 @@
     // 처음 올린 결과는 자동으로 선택해 둔다 (나중에 ★로 바꾸면 됨)
     const pf = pickField(field);
     if ((field === "images" || field === "videos" || field === "endImages") && ownerKey !== "plan" && !ownerKey.startsWith("log:") && !target[pf]) target[pf] = ids[0];
+    // 여러 컷 한 영상: 올린 영상도 지금 범위의 컷 길이대로 나눠 쓴다
+    if (ownerKey === "combo") { ids.forEach((id) => comboMeta(current(), id)); if (ids.includes(target.take)) applyComboTake(current(), target.take); }
     // 새로 올린 기준 이미지가 곧 시트의 기준이 된다
     if (field === "refs") target.basePick = ids[0];
     save();
@@ -510,6 +514,7 @@
       if (field === "refFiles" && Array.isArray(owner.refs)) owner.refs = owner.refs.filter((x) => x !== id);
       const pf = pickField(field);
       if (owner[pf] === id) owner[pf] = owner[field][0] || null;
+      if (ownerKey === "combo") { releaseCombo(current(), id, true); delete owner.metas[id]; if (owner.take) applyComboTake(current(), owner.take); }
       save();
       renderActive();
       cleanupMedia([id]);
@@ -523,6 +528,11 @@
       const pf = pickField(field);
       // 기준 이미지는 늘 하나가 골라져 있어야 한다 (해제 없음)
       owner[pf] = owner[pf] === id && field !== "refs" ? null : id;
+      // 여러 컷 한 영상: ★ 고른 영상을 범위의 컷들에 나눠 넣고, 해제하면 컷들은 원래 영상으로
+      if (ownerKey === "combo") {
+        owner.videos.filter((v) => v !== owner.take).forEach((v) => releaseCombo(current(), v, false));
+        if (owner.take) { applyComboTake(current(), owner.take); toast("이 영상을 컷마다 나눠 타임라인에 넣었어요"); }
+      }
       save();
       renderActive();
       if (field === "refs" && owner.images?.length && owner.sheetBase !== id) toast("기준 이미지를 바꿨어요. '이 기준으로 시트 만들기'를 누르면 새 시트가 만들어져요");
@@ -1089,7 +1099,7 @@
     const el = e.target.closest("[data-hf-model], [data-hf-tier]");
     if (!el) return;
     const stage = el.dataset.stage;
-    const shot = el.dataset.cut ? current().shots.find((s) => s.id === el.dataset.cut) : null;
+    const shot = el.dataset.cut === "combo" ? comboOf() : el.dataset.cut ? current().shots.find((s) => s.id === el.dataset.cut) : null;
     if (el.matches("[data-hf-model]")) {
       if (shot) { shot.videoModel = el.value || null; save(); }
       else saveHfSettings({ models: { ...hfSettings().models, [stage]: el.value } });
@@ -1100,7 +1110,7 @@
     $$("#settingsDialog [data-hf-slot]").forEach((slot) => (slot.innerHTML = hfPicker(slot.dataset.hfSlot)));
     renderActive();
     const m = hfModelFor(stage, shot);
-    toast(`${shot ? `컷 ${current().shots.indexOf(shot) + 1} ` : ""}${STAGE_LABEL[stage]} 모델: ${m.name}${hfTierOf(m) ? ` · ${hfTierOf(m)}` : ""}`);
+    toast(`${shot?.id === "combo" ? "한 영상 " : shot ? `컷 ${current().shots.indexOf(shot) + 1} ` : ""}${STAGE_LABEL[stage]} 모델: ${m.name}${hfTierOf(m) ? ` · ${hfTierOf(m)}` : ""}`);
   });
 
   // 웹에서 직접 만드는 모델(Midjourney 등): 프롬프트 복사 + 레퍼런스 저장 + 사이트 열기 — 클릭 즉시 실행해야 팝업이 막히지 않는다
@@ -1742,7 +1752,7 @@
     if (pkey === "style") return { obj: p.style, ko: "ko", en: "en", kind: "image" };
     const [kind, id, sub] = pkey.split(":");
     if (kind === "char") return { obj: p.characters.find((c) => c.id === id), ko: "ko", en: "en", kind: "image" };
-    const shot = p.shots.find((s) => s.id === id);
+    const shot = id === "combo" ? comboOf(p) : p.shots.find((s) => s.id === id);
     return sub === "vid" ? { obj: shot, ko: "vko", en: "ven", kind: "video" } : { obj: shot, ko: "ko", en: "en", kind: "image" };
   }
   const isStale = (t) => !!(t.obj[t.en] && t.obj[`${t.en}Src`] !== undefined && t.obj[`${t.en}Src`] !== t.obj[t.ko]);
@@ -2201,7 +2211,10 @@
     const act = document.activeElement?.closest?.("#promptFocus") ? document.activeElement : null;
     const keep = act?.dataset.pfield ? { f: act.dataset.pfield, a: act.selectionStart, b: act.selectionEnd } : null;
     let title = "", ctx = "", nav = "";
-    if (focusKey.startsWith("shot:")) {
+    if (t.obj.id === "combo") {
+      const shots = comboShots(p);
+      title = `컷 ${pad2(p.shots.indexOf(shots[0]) + 1)} ~ ${pad2(p.shots.indexOf(shots.at(-1)) + 1)} · 한 영상 프롬프트`;
+    } else if (focusKey.startsWith("shot:")) {
       const i = p.shots.indexOf(t.obj), s = t.obj, isVid = t.kind === "video", anchor = anchorOf(s);
       title = `컷 ${pad2(i + 1)} · ${isVid ? "영상" : "이미지"} 프롬프트`;
       nav = `<button type="button" class="tbtn-l" data-focus-nav="-1" ${i ? "" : "disabled"} aria-label="이전 컷">‹</button><button type="button" class="tbtn-l" data-focus-nav="1" ${i < p.shots.length - 1 ? "" : "disabled"} aria-label="다음 컷">›</button>`;
@@ -2365,6 +2378,24 @@
         `\n\n[첨부 이미지]\n${c.refs.length ? "첫 장: 이 캐릭터의 기준 이미지 (그대로 유지)" : "기준 이미지 없음 — 설명대로 디자인"}` +
         `${p.style.pick ? `\n마지막 1장: 스타일프레임 (화풍 기준)` : ""}\n\n3면도·표정·소품 디테일을 담은 캐릭터 시트 프롬프트를 써 주세요.`;
       images = await imageBlocks([baseOf(c), p.style.pick]);
+    } else if (t.obj.id === "combo") {
+      // 여러 컷 → 영상 1개: 컷마다 시간 표시로 이어 쓰기
+      const c = t.obj, shots = comboShots(p), m = hfModelFor("video", c), end = comboEnd(p, m);
+      const sec = fitDuration(m, c.vidSec || c.duration), r = sec / c.duration;
+      let tt = 0;
+      const lines = shots.map((s) => {
+        const a = tt * r;
+        tt += s.duration;
+        return `[${a.toFixed(1)}~${(tt * r).toFixed(1)}초] ${shotLine(s, p.shots.indexOf(s))}${s.vko || s.ko ? `\n  참고 프롬프트: ${s.vko || s.ko}` : ""}`;
+      });
+      const anchors = shots.map(anchorOf).filter(Boolean).slice(0, 8);
+      system = `${P.comboVideo}\n\n${P.shotVideo}\n\n${P.rules}`;
+      text = `${projectContext(p)}\n\n[한 영상으로 만들 컷 — 전체 ${sec}초]\n${lines.join("\n")}` +
+        `\n\n첨부 이미지는 위 컷들의 앵커 이미지를 순서대로 붙인 거예요 (${anchors.length}장). 첫 장이 이 영상의 시작 프레임이에요.` +
+        (end ? " 마지막 컷 앵커는 엔드 프레임으로도 붙어요 — 그 장면으로 끝나게 해 주세요." : "") +
+        `\n\n위 컷들을 시간 표시와 함께 하나로 이어지는 ${sec}초짜리 영상 프롬프트로 써 주세요.`;
+      images = await imageBlocks(anchors);
+      c.draftRange = comboKey(p);
     } else {
       const i = p.shots.indexOf(t.obj);
       const isVideo = t.kind === "video";
@@ -4798,7 +4829,10 @@
     toast(drafted || translated ? `초안 ${drafted}개 · 영문화 ${translated}개. 한글을 읽어 보고 고칠 곳은 고쳐 주세요` : "모든 컷에 프롬프트가 있어요");
   }
 
-  const shotOf = (el) => current().shots.find((s) => s.id === el.closest("[data-shot-id]")?.dataset.shotId);
+  const shotOf = (el) => {
+    const id = el.closest("[data-shot-id]")?.dataset.shotId;
+    return id === "combo" ? comboOf() : current().shots.find((s) => s.id === id);
+  };
 
   // 컷 길이·설명 직접 수정 (스토리보드)
   function editShotField(el, s) {
@@ -5630,10 +5664,13 @@
   }
 
   // 컷 안의 u초 → 영상 원본의 몇 초 (속도 · 리버스). 영상이 모자라면 끝 프레임에서 멈춘다
+  // 여러 컷을 한 영상으로 만들었으면 컷마다 그 영상의 어느 지점부터 쓰는지 (takeIn)
+  const takeInOf = (s) => (s.take && isObj(s.takeIns) ? Math.max(0, Number(s.takeIns[s.take]) || 0) : 0);
   function srcTime(s, u, len) {
-    const e = editOf(s), span = Math.min(s.duration * e.speed, len);
+    const e = editOf(s), off = Math.min(takeInOf(s), Math.max(0, len - 0.04)), avail = len - off;
+    const span = Math.min(s.duration * e.speed, avail);
     const t = e.reverse ? span - u * e.speed : Math.min(u * e.speed, span);
-    return Math.max(0, Math.min(t, len - 0.04));
+    return off + Math.max(0, Math.min(t, avail - 0.04));
   }
 
   // 영상 길이 (메타데이터가 없는 webm 등은 모름 → 충분히 길다고 본다)
@@ -5643,7 +5680,7 @@
     const el = v.el, len = vidLen(el) || 1e6;
     const e = editOf(s), t = srcTime(s, u, len);
     // 정방향 재생은 영상 자체를 그 속도로 틀고, 멈춤·탐색·리버스는 그 시간으로 찾아간다
-    const live = ed.playing && ed.liveId === s.id && !e.reverse && u * e.speed < len - 0.06;
+    const live = ed.playing && ed.liveId === s.id && !e.reverse && takeInOf(s) + u * e.speed < len - 0.06;
     if (live) {
       if (el.playbackRate !== e.speed) el.playbackRate = e.speed;
       if (el.paused) el.play().catch(() => {});
@@ -5967,10 +6004,12 @@
     const v = videoFor(s.take), len = v.ready ? vidLen(v.el) : 0;
     if (!v.ready) { el.textContent = "영상을 불러오는 중…"; return; }
     if (!len) { el.textContent = `${fmtSpeed(editOf(s).speed)}${editOf(s).reverse ? " · 거꾸로" : ""} (영상 길이 정보가 없는 파일이에요)`; return; }
-    const e = editOf(s), need = s.duration * e.speed, fit = Math.round((len / e.speed) * 10) / 10;
-    el.innerHTML = `원본 ${len.toFixed(1)}초 중 ${Math.min(need, len).toFixed(1)}초 사용${e.speed !== 1 ? ` · ${fmtSpeed(e.speed)}` : ""}${e.reverse ? " · 거꾸로" : ""}
-      ${need > len + 0.05 ? `<br>끝 ${(s.duration - len / e.speed).toFixed(1)}초는 마지막 프레임에서 멈춰요.` : ""}
-      ${Math.abs(fit - s.duration) >= 0.1 && fit <= 30 ? ` <button type="button" class="link-btn" data-fit-take="${fit}">영상 길이에 맞추기 (${fit}초)</button>` : ""}`;
+    // 한 영상으로 만든 컷: 그 영상의 off 초부터 (남은 길이 = 원본 - off)
+    const off = takeInOf(s), avail = Math.max(0, len - off);
+    const e = editOf(s), need = s.duration * e.speed, fit = Math.round((avail / e.speed) * 10) / 10;
+    el.innerHTML = `${off ? `한 영상의 ${off.toFixed(1)}초부터 · ` : ""}원본 ${len.toFixed(1)}초 중 ${Math.min(need, avail).toFixed(1)}초 사용${e.speed !== 1 ? ` · ${fmtSpeed(e.speed)}` : ""}${e.reverse ? " · 거꾸로" : ""}
+      ${need > avail + 0.05 ? `<br>끝 ${(s.duration - avail / e.speed).toFixed(1)}초는 마지막 프레임에서 멈춰요.` : ""}
+      ${!off && Math.abs(fit - s.duration) >= 0.1 && fit <= 30 ? ` <button type="button" class="link-btn" data-fit-take="${fit}">영상 길이에 맞추기 (${fit}초)</button>` : ""}`;
   }
 
   function setEdit(s, patch) {
@@ -6311,6 +6350,167 @@
     return ["", "프롬프트 없음"];
   }
 
+  // ── 여러 컷 → 영상 1개 (러닝타임이 짧을 때 한 번에) ──
+  // p.combo = { from, to (컷 범위), videos, take(★), metas: { 영상 id: { ids, offs } }, vko/ven, videoModel, vidSec, vidSize, vidTier, useEnd }
+  // 만든 영상은 범위의 컷마다 s.take + s.takeIn(그 영상의 몇 초부터)으로 나눠 넣어 애니메틱·편집·AE 가 그대로 쓴다
+  let comboBusy = false;
+  function comboShots(p = current()) {
+    const c = p.combo || {}, ids = p.shots.map((s) => s.id);
+    let a = ids.indexOf(c.from), b = ids.indexOf(c.to);
+    if (a < 0) a = 0;
+    if (b < 0) b = ids.length - 1;
+    return p.shots.slice(Math.min(a, b), Math.max(a, b) + 1);
+  }
+  function comboOf(p = current()) {
+    if (!isObj(p.combo)) p.combo = {};
+    const c = p.combo, ids = p.shots.map((s) => s.id);
+    c.id = "combo";
+    c.videos = arr(c.videos);
+    c.metas = isObj(c.metas) ? c.metas : {};
+    c.endImages = [];
+    if (!ids.includes(c.from)) c.from = ids[0] || null;
+    if (!ids.includes(c.to)) c.to = ids.at(-1) || null;
+    if (ids.indexOf(c.from) > ids.indexOf(c.to)) [c.from, c.to] = [c.to, c.from];
+    c.vko = str(c.vko); c.ven = str(c.ven);
+    if (!c.videos.includes(c.take)) c.take = null;
+    c.duration = comboShots(p).reduce((a, s) => a + s.duration, 0) || 1;
+    return c;
+  }
+  const comboKey = (p) => comboShots(p).map((s) => s.id).join(",");
+  // 엔드 프레임: 받는 모델이고 컷이 둘 이상이면 마지막 컷 앵커로 끝낸다 (끌 수 있음)
+  const comboEnd = (p, m) => { const sh = comboShots(p); return p.combo?.useEnd !== false && m.end && sh.length > 1 ? anchorOf(sh.at(-1)) : null; };
+  // 이 영상을 컷 길이 비율대로 나눈 시작 지점 (sec = 실제로 만든 길이)
+  function comboMeta(p, vid, sec) {
+    const c = comboOf(p), shots = comboShots(p), r = sec ? sec / c.duration : 1;
+    let t = 0;
+    const offs = shots.map((s) => { const o = Math.round(t * r * 100) / 100; t += s.duration; return o; });
+    return (c.metas[vid] = { ids: shots.map((s) => s.id), offs, sec: sec || c.duration });
+  }
+  function applyComboTake(p, vid) {
+    const c = comboOf(p), meta = c.metas[vid] || comboMeta(p, vid);
+    meta.ids.forEach((sid, k) => {
+      const s = p.shots.find((x) => x.id === sid);
+      if (!s) return;
+      if (!s.videos.includes(vid)) s.videos.push(vid);
+      s.take = vid;
+      s.takeIns = { ...(isObj(s.takeIns) ? s.takeIns : {}), [vid]: meta.offs[k] }; // 이 영상의 몇 초부터 (다른 테이크로 바꿨다 돌아와도 유지)
+    });
+  }
+  // 컷들에서 이 한 영상을 뺀다 (remove = 후보에서도 지우기). 컷은 자기 영상이 있으면 그걸로
+  function releaseCombo(p, vid, remove) {
+    const mine = new Set(arr(p.combo?.videos));
+    p.shots.forEach((s) => {
+      if (remove) {
+        s.videos = s.videos.filter((v) => v !== vid);
+        if (isObj(s.takeIns)) delete s.takeIns[vid];
+      }
+      if (s.take === vid) s.take = s.videos.find((v) => !mine.has(v)) || null;
+    });
+  }
+  async function ensureComboEnglish(p) {
+    const c = comboOf(p);
+    if (!str(c.vko)) c.vko = await draftPrompt("shot:combo:vid");
+    if (!str(c.ven) || isStale({ obj: c, ko: "vko", en: "ven" })) {
+      const [en] = await translatePrompts([c.vko], "video");
+      if (en) { c.ven = en; c.venSrc = c.vko; }
+    }
+    save();
+  }
+  async function generateCombo(p) {
+    comboBusy = true;
+    rerenderGen();
+    try {
+      await ensureComboEnglish(p);
+      const c = comboOf(p), shots = comboShots(p), m = hfModelFor("video", c), z = vidSizeOf(c), end = comboEnd(p, m);
+      const want = c.vidSec || c.duration, sec = fitDuration(m, want);
+      const [r] = await higgsfieldGenerate("video", [{
+        prompt: c.ven, aspect: z?.a || c.vidAspect || p.plan.ratio || "16:9",
+        refs: end ? [anchorOf(shots[0]), end] : [anchorOf(shots[0])], roles: end ? ["start_image", "end_image"] : null,
+        seconds: want, tier: tierForSize(m, z) || c.vidTier || null
+      }], m, "video");
+      const a = p.shots.indexOf(shots[0]) + 1, b = p.shots.indexOf(shots.at(-1)) + 1;
+      let made = 0;
+      for (const blob of r.blobs) {
+        const id = await storeMedia(blob, `cuts${pad2(a)}-${pad2(b)}_${m.id}.mp4`);
+        c.videos.push(id);
+        comboMeta(p, id, sec);
+        made++;
+        if (!c.take) { c.take = id; applyComboTake(p, id); }
+      }
+      save();
+      if (r.error) toast(r.error);
+      else if (made) toast(c.take === c.videos.at(-1) ? `영상을 받아 컷 ${shots.length}개에 나눠 넣었어요 — 애니메틱·편집에서 바로 보여요` : "새 영상을 받았어요. ★로 고르면 컷들에 들어가요");
+    } catch (err) {
+      toast(aiErrorText(err));
+    } finally {
+      comboBusy = false;
+      rerenderGen();
+    }
+  }
+  function comboGenTile(p) {
+    const c = comboOf(p), m = hfModelFor("video", c);
+    if (isWebModel(m)) {
+      const ready = str(c.ven) && !isStale({ obj: c, ko: "vko", en: "ven" });
+      return `<button type="button" class="gen-tile web" data-gen-combo ${comboBusy ? "disabled" : ""}>
+        ${comboBusy ? `<span class="mini-spin"></span>프롬프트 준비 중…` : `<b>↗</b>${ready ? `${esc(m.name)} 열기` : `프롬프트 만들고 ${esc(m.name)}`}`}</button>`;
+    }
+    if (!genReady(m)) return "";
+    return `<button type="button" class="gen-tile" data-gen-combo ${comboBusy ? "disabled" : ""}>
+      ${comboBusy ? `<span class="mini-spin"></span>생성 중…` : `<b>✨</b>${esc(m.name)}로 한 번에 만들기`}</button>`;
+  }
+
+  function renderComboDetail(p) {
+    const c = comboOf(p), all = p.shots, shots = comboShots(p), first = shots[0], last = shots.at(-1);
+    const a = all.indexOf(first), b = all.indexOf(last), m = hfModelFor("video", c), start = anchorOf(first), end = comboEnd(p, m);
+    const sec = m.web ? Math.round(c.vidSec || c.duration) : fitDuration(m, c.vidSec || c.duration), r = sec / c.duration;
+    const opt = (sel) => all.map((s, k) => `<option value="${esc(s.id)}" ${s.id === sel ? "selected" : ""}>컷 ${pad2(k + 1)}</option>`).join("");
+    const outdated = str(c.vko) && c.draftRange && c.draftRange !== comboKey(p);
+    let t = 0;
+    return `<section class="vx-detail card" data-shot-id="combo" aria-label="여러 컷 한 영상">
+      <header class="vx-head">
+        <div class="vx-title"><span class="vx-no">CUT ${pad2(a + 1)} ~ ${pad2(b + 1)} · 한 영상으로</span><h2>컷 ${shots.length}개 → 영상 1개</h2>
+          <p>합계 ${Number(c.duration.toFixed(1))}초 · 만든 영상은 컷 길이대로 나뉘어 애니메틱 · 편집 타임라인에 들어가요</p></div>
+        <div class="vx-range" title="한 영상으로 만들 컷 범위 — 왼쪽 목록에서 눌러도 돼요">
+          <select data-combo-from aria-label="시작 컷">${opt(c.from)}</select><span>~</span><select data-combo-to aria-label="끝 컷">${opt(c.to)}</select>
+          <button type="button" class="btn ghost small" data-combo-all>전체</button></div>
+      </header>
+
+      <div class="combo-strip" aria-label="컷 나눔">${shots.map((s) => {
+        const k = all.indexOf(s), an = anchorOf(s), t0 = t * r;
+        t += s.duration;
+        return `<div class="cs-cut" style="flex:${s.duration}"><span class="cs-img">${an ? `<img data-img-id="${esc(an)}" alt="" />` : `<i>앵커 없음</i>`}<b>${pad2(k + 1)}</b></span><small>${t0.toFixed(1)}–${(t * r).toFixed(1)}s</small></div>`;
+      }).join("")}</div>
+
+      <div class="vx-frames">
+        <figure class="vx-frame">
+          <figcaption>시작 프레임 <small>컷 ${pad2(a + 1)}</small></figcaption>
+          ${start ? `<div class="vx-img"><img data-img-id="${esc(start)}" alt="시작 프레임" title="크게 보기" /></div>`
+            : `<button type="button" class="vx-img vx-empty" data-goto="select">컷 ${pad2(a + 1)}에 앵커 이미지가 없어요<br><b>애니메틱에서 고르기 →</b></button>`}
+        </figure>
+        <span class="vx-arrow" aria-hidden="true">→</span>
+        <figure class="vx-frame">
+          <figcaption>엔드 프레임 <small>${shots.length > 1 ? `컷 ${pad2(b + 1)}` : "선택"}</small>
+            ${m.end && shots.length > 1 ? `<label class="inline small-check combo-end"><input type="checkbox" data-combo-end ${c.useEnd !== false ? "checked" : ""} /> 마지막 컷으로 끝내기</label>` : ""}</figcaption>
+          ${end ? `<div class="vx-img"><img data-img-id="${esc(end)}" alt="엔드 프레임" title="크게 보기" /></div>`
+            : `<div class="vx-img vx-empty-in">${shots.length < 2 ? "컷을 둘 이상 고르면 마지막 컷으로 끝낼 수 있어요" : !m.end ? `${esc(m.name)}는 엔드 프레임을 받지 않아요` : "프롬프트대로 끝나요"}</div>`}
+        </figure>
+      </div>
+
+      <div class="vx-settings">
+        <div class="cut-model">${hfPicker("video", c)}</div>
+        ${vidOpts(c)}
+      </div>
+
+      ${outdated ? `<p class="combo-warn">컷 범위가 바뀌었어요 — <b>✨ AI 초안</b>으로 다시 쓰면 지금 컷들로 맞춰져요</p>` : ""}
+      ${promptCard("shot:combo:vid", { placeholder: "[0~2초] 컷 1 … → [2~4초] 컷 2 … 처럼 시간 순서로 (✨ AI 초안이 컷마다 나눠 써 줘요)" })}
+
+      <div class="vx-results">
+        <div class="vx-sub"><b>결과</b><small>${c.videos.length ? `${c.videos.length}개 · ★ 고른 영상이 컷마다 나뉘어 들어가요` : `${esc(m.name)}로 한 번에 만들거나, 다른 곳에서 만든 영상을 올려요`}</small></div>
+        <div class="cut-results">${mediaGrid(c, "combo", "videos", { pickable: true, addLabel: "영상 올리기" })}${start ? comboGenTile(p) : ""}</div>
+      </div>
+    </section>`;
+  }
+
   function renderVideo() {
     const p = current();
     const shots = p.shots;
@@ -6319,18 +6519,26 @@
       $("#videoBody").innerHTML = `<div class="card empty-inline"><p>컷이 없어요. 스토리보드에서 컷을 먼저 만들어 주세요.</p><button type="button" class="btn ghost small" data-goto="board">스토리보드로</button></div>`;
       return;
     }
+    const combo = p.videoMode === "combo";
+    const inCombo = combo ? new Set(comboShots(p).map((s) => s.id)) : null;
     if (!shots.some((s) => s.id === vxSel)) vxSel = (shots.find((s) => !s.take && anchorOf(s)) || shots[0]).id;
     const i = shots.findIndex((s) => s.id === vxSel), s = shots[i], anchor = anchorOf(s);
     const b = briefOf(s) || fallbackBrief(s), m = hfModelFor("video", s);
     const listScroll = $("#videoBody .vx-list-body")?.scrollTop || 0;
     $("#videoBody").innerHTML = `
-      ${autoPromptBar("video", shots)}
+      ${combo ? `<div class="toolbar card"><span class="hint">러닝타임이 짧으면 여러 컷을 한 번에 — 컷 흐름이 자연스럽게 이어지고 생성도 한 번이에요</span><span class="spacer"></span>
+        <button type="button" class="btn ghost small${termUi.dock ? " on" : ""}" data-term-dock title="샷·카메라·연출·모션·디자인 용어를 옆에 띄워 클릭으로 넣기">📖 용어 사전</button></div>` : autoPromptBar("video", shots)}
       <div class="vx">
         <aside class="vx-list card" aria-label="컷 목록">
-          <div class="vx-list-head"><b>컷 ${shots.length}</b><span class="vx-prog"><i style="width:${(takes / shots.length) * 100}%"></i></span><small>영상 ${takes}/${shots.length}</small></div>
+          <div class="vx-mode seg" role="tablist" aria-label="영상화 방식">
+            <button type="button" role="tab" data-vx-mode="cut" class="${combo ? "" : "on"}" aria-selected="${!combo}">컷별로</button>
+            <button type="button" role="tab" data-vx-mode="combo" class="${combo ? "on" : ""}" aria-selected="${combo}" title="여러 컷을 영상 하나로 한 번에">한 영상으로</button>
+          </div>
+          <div class="vx-list-head"><b>컷 ${shots.length}</b><span class="vx-prog"><i style="width:${(takes / shots.length) * 100}%"></i></span><small>${combo ? `${inCombo.size}컷 선택` : `영상 ${takes}/${shots.length}`}</small></div>
           <div class="vx-list-body">${shots.map((x, k) => {
             const an = anchorOf(x), [ps, pl] = vxPromptState(x), xm = hfModelFor("video", x), z = vidSizeOf(x);
-            return `<button type="button" class="vx-row${x.id === vxSel ? " on" : ""}" data-vx-sel="${esc(x.id)}">
+            const cls = combo ? (inCombo.has(x.id) ? " in" : " out") : x.id === vxSel ? " on" : "";
+            return `<button type="button" class="vx-row${cls}" data-vx-sel="${esc(x.id)}" ${combo ? `title="${inCombo.has(x.id) ? "누르면 여기까지로 줄여요" : "누르면 여기까지 늘려요"}"` : ""}>
               <span class="vx-thumb">${an ? `<img data-img-id="${esc(an)}" alt="" draggable="false" />` : `<i>앵커 없음</i>`}<b class="vx-num">${pad2(k + 1)}</b><s class="vx-dur">${x.vidSec || Math.round(x.duration)}s</s>${x.take ? `<em title="영상 있음">▶</em>` : ""}${videoGenBusy.has(x.id) ? `<span class="vx-busy"><span class="mini-spin"></span></span>` : ""}</span>
               <span class="vx-meta">
                 <b><span>${pad2(k + 1)}</span>${esc((briefOf(x) || fallbackBrief(x)).title || x.type)}</b>
@@ -6341,7 +6549,7 @@
           ${takes ? `<button type="button" class="btn small full vx-final" data-goto="edit">▶ 최종 영상 미리보기</button>` : ""}
         </aside>
 
-        <section class="vx-detail card" data-shot-id="${esc(s.id)}" aria-label="컷 ${i + 1}">
+        ${combo ? renderComboDetail(p) : `<section class="vx-detail card" data-shot-id="${esc(s.id)}" aria-label="컷 ${i + 1}">
           <header class="vx-head">
             <div class="vx-title"><span class="vx-no">CUT ${pad2(i + 1)}</span><h2>${esc(b.title || s.type)}</h2>
               ${b.points.length ? `<p>${esc(b.points.join(" · "))}</p>` : ""}</div>
@@ -6375,7 +6583,7 @@
             <div class="vx-sub"><b>결과</b><small>${s.videos.length ? `${s.videos.length}개 · ★ 고른 영상을 편집에 써요` : `${esc(m.name)}로 만들거나, 다른 곳에서 만든 영상을 올려요`}</small></div>
             <div class="cut-results">${mediaGrid(s, `shot:${s.id}`, "videos", { pickable: true, addLabel: "영상 올리기" })}${anchor ? videoGenTile(s) : ""}</div>
           </div>
-        </section>
+        </section>`}
       </div>`;
     const lb = $("#videoBody .vx-list-body");
     if (lb) lb.scrollTop = listScroll;
@@ -6383,15 +6591,67 @@
     autoBriefs(p);
   }
 
-  $("#videoBody").addEventListener("click", (e) => {
+  $("#videoBody").addEventListener("click", async (e) => {
+    const p = current();
     const dl = e.target.closest("[data-anchor-dl]");
     if (dl) return downloadMedia(dl.dataset.anchorDl, `shot${pad2(dl.dataset.n)}_start`);
+    const mode = e.target.closest("[data-vx-mode]");
+    if (mode) { p.videoMode = mode.dataset.vxMode === "combo" ? "combo" : null; save({ undo: false }); return renderVideo(); }
     const row = e.target.closest("[data-vx-sel]");
+    if (row && p.videoMode === "combo") {
+      // 한 영상으로: 범위 밖을 누르면 거기까지 늘리고, 안을 누르면 거기까지로 줄인다
+      const c = comboOf(p), ids = p.shots.map((s) => s.id), k = ids.indexOf(row.dataset.vxSel), a = ids.indexOf(c.from), b = ids.indexOf(c.to);
+      if (k < a) c.from = ids[k];
+      else if (k > b) c.to = ids[k];
+      else if (k === a && a < b) c.from = ids[a + 1];
+      else c.to = ids[k];
+      save();
+      return renderVideo();
+    }
     if (row) { vxSel = row.dataset.vxSel; return renderVideo(); }
+    if (e.target.closest("[data-combo-all]")) {
+      const c = comboOf(p);
+      c.from = p.shots[0].id; c.to = p.shots.at(-1).id;
+      save();
+      return renderVideo();
+    }
+    if (e.target.closest("[data-gen-combo]")) {
+      const c = comboOf(p), m = hfModelFor("video", c), shots = comboShots(p);
+      if (!anchorOf(shots[0])) return toast("첫 컷에 앵커 이미지가 있어야 해요");
+      if (isWebModel(m)) {
+        // 웹 영상 모델: 영문 프롬프트 복사 + 시작·끝 프레임 저장 + 사이트 열기
+        if (str(c.ven) && !isStale({ obj: c, ko: "vko", en: "ven" })) return webHandoff(m, c.ven, [anchorOf(shots[0]), comboEnd(p, m)].filter(Boolean), "cuts_start_end");
+        if (!aiReady()) return toast("영상 프롬프트를 먼저 써 주세요");
+        comboBusy = true;
+        rerenderGen();
+        try { await ensureComboEnglish(p); toast(`프롬프트가 준비됐어요. '${m.name} 열기'를 누르세요`); }
+        catch (err) { toast(aiErrorText(err)); }
+        finally { comboBusy = false; rerenderGen(); }
+        return;
+      }
+      if (!str(c.ven) && !aiReady()) return toast("영상 프롬프트를 먼저 써 주세요 (또는 AI 연결)");
+      if (!confirm(`컷 ${shots.length}개를 영상 하나로 — ${hfCostNote("video", 1, [m])} 만들까요?`)) return;
+      return generateCombo(p);
+    }
     const step = e.target.closest("[data-vx-step]");
     if (step) {
       const shots = current().shots, k = shots.findIndex((x) => x.id === vxSel) + Number(step.dataset.vxStep);
       if (shots[k]) { vxSel = shots[k].id; renderVideo(); $(`#videoBody [data-vx-sel="${CSS.escape(vxSel)}"]`)?.scrollIntoView({ block: "nearest" }); }
+    }
+  });
+  $("#videoBody").addEventListener("change", (e) => {
+    const p = current();
+    const from = e.target.closest("[data-combo-from], [data-combo-to]");
+    if (from) {
+      const c = comboOf(p);
+      c[from.matches("[data-combo-from]") ? "from" : "to"] = from.value;
+      save();
+      return renderVideo();
+    }
+    if (e.target.matches("[data-combo-end]")) {
+      comboOf(p).useEnd = e.target.checked;
+      save();
+      renderVideo();
     }
   });
   // ── 8 편집 · AE 패키지 ───────────────────────────
@@ -6458,27 +6718,31 @@
       const fps = Number($("#compFps")?.value || 24);
       const compName = ($("#compName")?.value || p.name).trim() || "AI Motion";
       const items = [];
-      const csv = [["cut", "start", "duration", "shot", "file", "speed", "reverse", "camera_move", "transition_in", "description", "image_prompt_en", "video_prompt_en"]];
+      const csv = [["cut", "start", "duration", "shot", "file", "source_in", "speed", "reverse", "camera_move", "transition_in", "description", "image_prompt_en", "video_prompt_en"]];
       let t = 0;
+      const files = new Map(); // 같은 영상(여러 컷 한 영상)은 한 번만 담는다
       // 편집 타임라인 그대로 (추가 클립 포함 · 뺀 컷 제외)
       for (const [i, s] of tlClips(p, "final").entries()) {
         const id = s.take || anchorOf(s);
         let file = "", isVid = false;
-        if (id) {
+        if (id && files.has(id)) ({ file, isVid } = files.get(id));
+        else if (id) {
           const rec = await getMedia(id).catch(() => null);
           if (rec) {
             isVid = rec.kind === "video";
             file = `media/shot${pad2(i + 1)}_${isVid ? "take" : "anchor"}.${EXT[rec.type] || (isVid ? "mp4" : "png")}`;
             zip.file(file, rec.blob);
+            files.set(id, { file, isVid });
           }
         }
+        const inp = isVid ? takeInOf(s) : 0;
         const name = `${pad2(i + 1)} ${briefOf(s)?.title || s.description.split(" — ")[0] || s.type}`.slice(0, 60);
         const e = editOf(s);
         const trans = i > 0 || e.trans === "fade" ? e.trans : "cut";
         // 영상 컷: 영상 자체의 움직임을 쓰므로 카메라 무빙 대신 속도·리버스 (최종 편집 화면과 같게)
         const move = isVid ? "none" : e.move, speed = isVid ? e.speed : 1, reverse = isVid && e.reverse;
-        items.push({ file, dur: s.duration, name, note: s.description, ...e, move, speed, reverse, trans });
-        csv.push([i + 1, t.toFixed(2), s.duration, s.type, file, speed, reverse ? "yes" : "", move, trans === "cut" ? "cut" : `${trans} ${e.transDur}s`, s.description, s.en, s.ven]);
+        items.push({ file, dur: s.duration, name, note: s.description, ...e, move, speed, reverse, trans, inp });
+        csv.push([i + 1, t.toFixed(2), s.duration, s.type, file, inp.toFixed(2), speed, reverse ? "yes" : "", move, trans === "cut" ? "cut" : `${trans} ${e.transDur}s`, s.description, s.en, s.ven]);
         t += s.duration;
       }
       // 타임라인 메모 → 컴프 마커 + notes.txt
@@ -6490,20 +6754,20 @@
   var base = File($.fileName).parent;
   var W = ${W}, H = ${H}, FPS = ${fps}, TOTAL = ${Math.max(t, 1 / fps).toFixed(3)};
   var shots = [
-${items.map((x) => `    { file: ${jsx(x.file)}, dur: ${x.dur}, name: ${jsx(x.name)}, note: ${jsx(x.note)}, move: ${jsx(x.move)}, str: ${x.strength}, trans: ${jsx(x.trans)}, td: ${x.transDur}, sp: ${x.speed}, rev: ${x.reverse} }`).join(",\n")}
+${items.map((x) => `    { file: ${jsx(x.file)}, dur: ${x.dur}, name: ${jsx(x.name)}, note: ${jsx(x.note)}, move: ${jsx(x.move)}, str: ${x.strength}, trans: ${jsx(x.trans)}, td: ${x.transDur}, sp: ${x.speed}, rev: ${x.reverse}, inp: ${Number(x.inp.toFixed(3))} }`).join(",\n")}
   ];
   var notes = [
 ${notes.map(({ n, t: nt }, k) => `    { t: ${nt.toFixed(3)}, text: ${jsx(`${k + 1}. ${n.done ? "(해결) " : ""}${n.text || "메모"}`)} }`).join(",\n")}
   ];
-  // 속도·리버스: 타임 리맵. 영상이 모자라면 마지막 프레임에서 멈춘다
-  function applySpeed(layer, len, t0, dur, sp, rev) {
+  // 속도·리버스: 타임 리맵. 영상이 모자라면 마지막 프레임에서 멈춘다. off = 원본에서 시작할 지점(여러 컷 한 영상)
+  function applySpeed(layer, len, t0, dur, sp, rev, off) {
     if (sp == 1 && !rev) return;
     layer.timeRemapEnabled = true;
     var R = layer.property("Time Remap");
-    var span = Math.min(dur * sp, len - 1 / FPS), t1 = t0 + span / sp;
-    R.setValueAtTime(t0, rev ? span : 0);
-    R.setValueAtTime(t1, rev ? 0 : span);
-    if (t1 < t0 + dur - 0.001) R.setValueAtTime(t0 + dur, rev ? 0 : span);
+    var span = Math.min(dur * sp, len - off - 1 / FPS), t1 = t0 + span / sp;
+    R.setValueAtTime(t0, off + (rev ? span : 0));
+    R.setValueAtTime(t1, off + (rev ? 0 : span));
+    if (t1 < t0 + dur - 0.001) R.setValueAtTime(t0 + dur, off + (rev ? 0 : span));
     for (var k = R.numKeys; k >= 1; k--) {
       var kt = R.keyTime(k);
       if (Math.abs(kt - t0) > 0.001 && Math.abs(kt - t1) > 0.001 && Math.abs(kt - (t0 + dur)) > 0.001) R.removeKey(k);
@@ -6581,20 +6845,23 @@ ${notes.map(({ n, t: nt }, k) => `    { t: ${nt.toFixed(3)}, text: ${jsx(`${k + 
   var folder = proj.items.addFolder(${jsx(`AI Motion Studio - ${compName}`)});
   var comp = proj.items.addComp(${jsx(compName)}, W, H, 1, TOTAL, FPS);
   comp.parentFolder = folder;
-  var t = 0, missing = [], prev = null;
+  var t = 0, missing = [], prev = null, imported = {};
   for (var i = 0; i < shots.length; i++) {
     var s = shots[i], layer = null, sc = 100;
     if (s.file) {
       var f = new File(base.fsName + "/" + s.file);
       if (f.exists) {
-        var item = proj.importFile(new ImportOptions(f));
-        item.parentFolder = folder;
+        // 여러 컷이 한 영상을 나눠 쓰면 한 번만 가져온다
+        var item = imported[s.file];
+        if (!item) { item = proj.importFile(new ImportOptions(f)); item.parentFolder = folder; imported[s.file] = item; }
         layer = comp.layers.add(item);
-        layer.startTime = t;
+        // inp: 원본의 이 지점부터 이 컷이 시작 (여러 컷 한 영상)
+        layer.startTime = t - s.inp;
+        try { layer.inPoint = t; } catch (e0) { /* 그대로 */ }
         try { layer.outPoint = Math.min(t + s.dur, TOTAL); } catch (e) { /* 영상이 컷보다 짧으면 원본 길이까지만 */ }
         sc = Math.max(W / item.width, H / item.height) * 100;
         layer.property("Scale").setValue([sc, sc]);
-        if (item.duration > 0 && (s.sp != 1 || s.rev)) { try { applySpeed(layer, item.duration, t, s.dur, s.sp, s.rev); } catch (e5) { /* 속도 실패 시 원래 속도 */ } }
+        if (item.duration > 0 && (s.sp != 1 || s.rev)) { try { applySpeed(layer, item.duration, t, s.dur, s.sp, s.rev, s.inp); } catch (e5) { /* 속도 실패 시 원래 속도 */ } }
       } else { missing.push(s.file); }
     }
     if (!layer) {

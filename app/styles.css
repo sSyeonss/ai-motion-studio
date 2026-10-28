@@ -1655,3 +1655,23 @@ main { justify-self: center; }
 /* 웹 버전 안내 (AI 연결 창) */
 .set-web { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--text); font-size: 13px; line-height: 1.6; }
 .set-web a { color: var(--accent-text); font-weight: 700; }
+
+/* ── 영상화: 컷별로 / 한 영상으로 ── */
+.vx-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 10px 10px 0; padding: 3px; border-radius: 11px; background: var(--surface-2); }
+.vx-mode button { height: 32px; border: 0; border-radius: 8px; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.vx-mode button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(15, 28, 63, .12); }
+.vx-row.in { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+.vx-row.out { opacity: .45; }
+.vx-row.out:hover { opacity: .8; }
+.vx-range { display: flex; align-items: center; gap: 6px; flex: none; }
+.vx-range select { height: 34px; padding: 0 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); font: inherit; font-size: 13px; font-weight: 700; }
+.vx-range span { color: var(--faint); }
+.combo-strip { display: flex; gap: 4px; padding: 8px; border-radius: 14px; background: var(--surface-2); overflow-x: auto; }
+.cs-cut { min-width: 64px; display: grid; gap: 4px; }
+.cs-img { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--surface); display: grid; place-items: center; }
+.cs-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cs-img i { font-style: normal; font-size: 10.5px; color: var(--faint); }
+.cs-img b { position: absolute; left: 5px; top: 5px; padding: 0 5px; border-radius: 5px; background: rgba(15, 28, 63, .72); color: #fff; font-size: 10.5px; }
+.cs-cut small { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: center; }
+.combo-end { margin-left: auto; font-weight: 600; }
+.combo-warn { margin: 0; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--warn) 14%, transparent); font-size: 13px; }
