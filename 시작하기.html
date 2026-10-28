@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Motion Studio 시작하기</title>
+<style>
+  :root { --bg: #f7f7f8; --surface: #fff; --text: #0b0b0d; --muted: #6b6b75; --line: #e6e6ea; --accent: #ff5b1f; --soft: #fff1ea; --ok: #16a34a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0b0b0c; --surface: #141416; --text: #f4f4f5; --muted: #a1a1aa; --line: #27272b; --accent: #ff7a45; --soft: #2a170f; --ok: #22c55e; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.7 "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; letter-spacing: -0.01em; }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-size: 30px; letter-spacing: -0.04em; margin: 0 0 6px; }
+  h2 { font-size: 19px; letter-spacing: -0.03em; margin: 40px 0 12px; display: flex; align-items: center; gap: 10px; }
+  h2 .n { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; }
+  p { margin: 6px 0; }
+  .lead { color: var(--muted); font-size: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .grid .card b { display: block; margin-bottom: 2px; }
+  .muted { color: var(--muted); font-size: 13.5px; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-top: 1px solid var(--line); }
+  th { background: var(--bg); font-size: 12.5px; color: var(--muted); border-top: 0; }
+  td:first-child { font-weight: 700; white-space: nowrap; }
+  .ok { color: var(--ok); font-weight: 700; }
+  .tip { background: var(--soft); border-color: transparent; }
+  ol.steps { margin: 0; padding-left: 20px; }
+  ol.steps li { margin: 4px 0; }
+  a { color: var(--accent); }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 0 8px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); margin-left: 4px; }
+  @media (max-width: 640px) { td:first-child { white-space: normal; } table { font-size: 13px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>AI Motion Studio 시작하기</h1>
+  <p class="lead">AI 모션그래픽 작업(기획 → 캐릭터 → 스타일프레임 → 스토리보드 → 샷 이미지 → 애니메틱 → 영상화 → 편집·AE)을 한 화면에서 이어 가는 개인 작업 앱이에요. AI는 <b>각자 자기 계정</b>으로 연결해서 써요.</p>
+
+  <h2><span class="n">1</span>준비물 — Node.js 하나</h2>
+  <div class="card">
+    <p><a href="https://nodejs.org/ko" target="_blank" rel="noopener">nodejs.org</a>에서 <b>LTS</b> 버전을 설치하세요 (한 번만). 앱 자체는 설치할 것이 없어요.</p>
+  </div>
+
+  <h2><span class="n">2</span>실행</h2>
+  <p id="dl" hidden><a href="AI-Motion-Studio.zip" download>⬇ AI-Motion-Studio.zip 내려받기</a> <span class="muted">— 웹에서 열었다면 여기서 받으세요</span></p>
+  <div class="grid">
+    <div class="card"><b>Windows</b><p>압축을 풀고 <code>start.cmd</code>를 더블클릭. 검은 창이 뜨고 브라우저에 앱이 열려요.</p><p class="muted">검은 창은 작업하는 동안 켜 두세요.</p></div>
+    <div class="card"><b>Mac</b><p>압축을 풀고 <code>start.command</code>를 더블클릭. 처음에 막히면 <b>우클릭 → 열기</b>, 또는 터미널에서 <code>bash start.command</code></p><p class="muted">터미널 창은 작업하는 동안 켜 두세요.</p></div>
+  </div>
+  <p class="muted">앱 주소는 <code>http://127.0.0.1:8790</code> — 내 컴퓨터 안에서만 열리는 주소예요.</p>
+
+  <h2><span class="n">3</span>내 AI 연결하기</h2>
+  <p>앱 왼쪽 아래 <b>AI 연결</b>(⚙)을 누르고, 내가 쓰는 것을 고르면 돼요. 여러 개 써도 되고, 단계마다 다르게 골라도 돼요.</p>
+  <table>
+    <thead><tr><th>내가 쓰는 것</th><th>글 작업 (기획·프롬프트)</th><th>이미지 · 영상</th><th>준비</th></tr></thead>
+    <tbody>
+      <tr><td>Claude 구독<br><span class="tag">Pro · Max</span></td><td class="ok">자동</td><td>Higgsfield 계정이 있으면 <span class="ok">자동</span></td><td><a href="https://claude.com/claude-code" target="_blank" rel="noopener">Claude Code</a> 설치 후 로그인. Higgsfield는 Claude 설정 → 커넥터에서 Higgsfield 켜기</td></tr>
+      <tr><td>ChatGPT 구독<br><span class="tag">Plus · Pro</span></td><td class="ok">자동</td><td>ChatGPT · Sora (웹)에서 직접 — 앱이 프롬프트를 복사하고 사이트를 열어 줘요</td><td>터미널에서 <code>npm i -g @openai/codex</code> → <code>codex login</code></td></tr>
+      <tr><td>Gemini<br><span class="tag">구글 계정 · 베타</span></td><td class="ok">자동</td><td>Gemini (웹)에서 직접</td><td>터미널에서 <code>npm i -g @google/gemini-cli</code> → <code>gemini</code> 실행해 로그인</td></tr>
+      <tr><td>API 키<br><span class="tag">OpenAI · Gemini · Claude</span></td><td class="ok">자동</td><td>OpenAI · Gemini 키면 이미지 <span class="ok">자동</span> (GPT Image · Nano Banana)</td><td>AI 연결 → 내 API 키에 붙여넣기. 쓴 만큼 요금이 나가요</td></tr>
+      <tr><td>Higgsfield · Midjourney · Kling 웹</td><td>—</td><td>웹에서 직접 (복사 → 사이트 → 결과를 칸에 Ctrl+V)</td><td>각 사이트 로그인만</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">구독(Claude · ChatGPT · Gemini)은 2번처럼 <b>start 파일로 열었을 때</b> 내 컴퓨터에 로그인된 계정을 그대로 써요. API 키는 내 브라우저에만 저장되고, 프로젝트 백업 파일에도 들어가지 않아요.</p>
+
+  <h2><span class="n">4</span>내 작업 · 옮기기 · 함께 쓰기</h2>
+  <div class="grid">
+    <div class="card"><b>저장</b><p>작업은 지금 쓰는 브라우저에 자동 저장돼요. 다른 브라우저·컴퓨터와는 따로예요.</p></div>
+    <div class="card"><b>옮기기 · 전달</b><p>사이드바 <b>⬇ 백업</b>으로 파일을 받고, 다른 곳에서 <b>⬆ 가져오기</b>. 프로젝트를 다른 사람에게 넘길 때도 이 파일이면 돼요 (키는 안 들어가요).</p></div>
+    <div class="card"><b>크레딧 · 요금</b><p>작업 현황에서 단계별 사용량을 볼 수 있어요. 정확한 잔액은 각 플랫폼 사이트에서 확인하세요.</p></div>
+  </div>
+
+  <h2><span class="n">?</span>자주 묻는 것</h2>
+  <div class="card">
+    <p><b>앱이 안 열려요</b> — 검은 창(터미널)에 뜬 주소 <code>http://127.0.0.1:8790</code>을 브라우저에 직접 넣어 보세요. "포트가 이미 사용 중"이면 이미 켜져 있는 거예요.</p>
+    <p><b>AI 연결에 '설치·로그인 필요'라고 나와요</b> — 표의 준비 칸대로 설치·로그인한 뒤 start 파일을 다시 실행하세요.</p>
+    <p><b>링크만으로 쓸 수는 없나요?</b> — 웹에 올린 버전도 열 수는 있지만, 그때는 <b>API 키</b>와 <b>웹에서 직접</b>만 돼요. 구독 계정을 쓰려면 이렇게 내려받아 start 파일로 여세요.</p>
+  </div>
+</main>
+<script>
+  // 웹에 올린 버전에서만 압축 파일 내려받기 링크를 보인다
+  if (/^https?:$/.test(location.protocol) && !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) document.getElementById("dl").hidden = false;
+</script>
+</body>
+</html>
