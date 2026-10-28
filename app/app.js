@@ -857,7 +857,7 @@
         ${unknown ? `<p class="hint">‘확인 안 됨’은 Higgsfield가 사용량을 알려 주지 않은 건이에요. 정확한 잔액은 Higgsfield 사이트에서 확인하세요.</p>` : ""}
         <details class="usage-recent"><summary>최근 기록</summary><ul>${recent.map((u) => `
           <li><span>${fmtWhen(u.at)}</span><span>${esc(STAGE_LABEL[u.stage] || u.stage)}</span><span class="hint">${esc(u.model || "")}</span><b>${u.unlim ? "무제한" : u.api ? "API" : u.credits == null ? "?" : fmt(u.credits)}</b></li>`).join("")}</ul></details>`
-        : `<p class="hint usage-empty">아직 Higgsfield로 만든 것이 없어요. 스타일프레임·캐릭터·샷 이미지·영상을 자동으로 만들면 단계별로 여기에 쌓여요.</p>`}
+        : `<p class="hint usage-empty">아직 Higgsfield로 만든 것이 없어요. 스타일프레임·캐릭터·이미지·영상을 자동으로 만들면 단계별로 여기에 쌓여요.</p>`}
     </section>`;
   }
 
@@ -939,7 +939,7 @@
                 <button type="button" class="btn hero-btn" data-autopilot>✨ 남은 작업 자동 진행 <span aria-hidden="true">→</span></button>
                 <button type="button" class="btn ghost" data-goto="${nextId}">${esc(next.title)} 열기</button>
               </div>
-              <label class="inline small-check"><input type="checkbox" data-auto-images ${autoImagesOn() ? "checked" : ""} /> 샷 이미지도 자동으로 만들기</label>
+              <label class="inline small-check"><input type="checkbox" data-auto-images ${autoImagesOn() ? "checked" : ""} /> 이미지화도 자동으로</label>
             </div>
             <div class="hero-art" aria-hidden="true">${HERO_ART}</div>
           </section>
@@ -1035,7 +1035,7 @@
   // Higgsfield 생성 설정 — 단계별 모델(스타일프레임·캐릭터·샷 이미지·영상 기본), 모델별 화질, 무제한 사용
   // 영상은 컷마다 shot.videoModel 로 따로 고를 수 있다 (비우면 기본 모델)
   const STAGE_KIND = { style: "image", chars: "image", shots: "image", video: "video" };
-  const STAGE_LABEL = { style: "스타일프레임", chars: "캐릭터", shots: "샷 이미지", video: "영상" };
+  const STAGE_LABEL = { style: "스타일프레임", chars: "캐릭터", shots: "이미지화", video: "영상" };
   function hfSettings() {
     let s = {};
     try { s = JSON.parse(readLocal(HF_SETTINGS_STORAGE) || "{}"); } catch { /* ignore */ }
@@ -2410,7 +2410,7 @@
       } else {
         // 스토리보드 스케치가 있으면 함께 보고 구도(배치·샷 크기·앵글)를 프롬프트에 옮긴다
         const sketch = await boardRefId(p, t.obj).catch(() => null);
-        text += `\n\n이 컷의 샷 이미지 프롬프트를 써 주세요.${sketch ? ` ${p.style.pick ? "두 번째" : "첨부한"} 이미지는 이 컷의 스토리보드 스케치예요 — 배치·샷 크기·앵글을 프롬프트에 구체적으로 옮기고, 선 그림체는 따르지 마세요.` : ""}`;
+        text += `\n\n이 컷의 이미지 프롬프트를 써 주세요.${sketch ? ` ${p.style.pick ? "두 번째" : "첨부한"} 이미지는 이 컷의 스토리보드 스케치예요 — 배치·샷 크기·앵글을 프롬프트에 구체적으로 옮기고, 선 그림체는 따르지 마세요.` : ""}`;
         images = await imageBlocks([p.style.pick, sketch]);
       }
     }
@@ -2733,7 +2733,7 @@
         .map((k) => ({ id: newId(), cat: KW_TO_TERM_CAT[k.cat] || "mine", ko: k.ko, en: k.en, desc: `레퍼런스 분석에서 담은 ${k.cat} 키워드`, icon: "✦" }));
       if (!add.length) return toast("켜 둔 키워드가 이미 용어 사전에 있어요");
       addCustomTerms(add);
-      return toast(`키워드 ${add.length}개를 용어 사전에 담았어요 (샷 이미지 · 영상화의 📖 용어 사전)`);
+      return toast(`키워드 ${add.length}개를 용어 사전에 담았어요 (이미지화 · 영상화의 📖 용어 사전)`);
     }
   });
 
@@ -4252,11 +4252,11 @@
     bar.innerHTML = `
       <p><b>기획이 바뀌었어요</b> <span class="sync-what">${esc(what.join(" · "))}</span><br>다른 단계에도 반영할까요?</p>
       ${tg.board.length ? `<label class="inline"><input type="checkbox" data-psync="board" ${keep("board", true) ? "checked" : ""} /> 스토리보드 스케치 <small>${cuts(tg.board)} 다시 그리기</small></label>` : ""}
-      ${tg.img.length ? `<label class="inline"><input type="checkbox" data-psync="img" ${keep("img", true) ? "checked" : ""} /> 샷 이미지 프롬프트 <small>${cuts(tg.img)} 고쳐 쓰기</small></label>` : ""}
+      ${tg.img.length ? `<label class="inline"><input type="checkbox" data-psync="img" ${keep("img", true) ? "checked" : ""} /> 이미지 프롬프트 <small>${cuts(tg.img)} 고쳐 쓰기</small></label>` : ""}
       ${tg.vid.length ? `<label class="inline"><input type="checkbox" data-psync="vid" ${keep("vid", true) ? "checked" : ""} /> 영상 프롬프트 <small>${cuts(tg.vid)} 고쳐 쓰기</small></label>` : ""}
       ${tg.style ? `<label class="inline"><input type="checkbox" data-psync="style" ${keep("style", d.global.length > 0) ? "checked" : ""} /> 스타일프레임 프롬프트 <small>바뀐 기획으로 다시 쓰기</small></label>
         ${gen ? `<label class="inline sub"><input type="checkbox" data-psync="styleGen" ${keep("styleGen", false) ? "checked" : ""} /> 새 스타일프레임도 만들기 <small>이미지 1장 (크레딧)</small></label>` : ""}` : ""}
-      <p class="sync-note">${tg.autoImg ? `샷 이미지 프롬프트 ${tg.autoImg}컷은 자동으로 고쳐 써요. ` : ""}고쳐 쓴 프롬프트는 카드의 ↶ 이전 프롬프트로 되돌릴 수 있어요.</p>
+      <p class="sync-note">${tg.autoImg ? `이미지 프롬프트 ${tg.autoImg}컷은 자동으로 고쳐 써요. ` : ""}고쳐 쓴 프롬프트는 카드의 ↶ 이전 프롬프트로 되돌릴 수 있어요.</p>
       <div class="sync-actions">
         <button type="button" class="btn ghost small" data-psync-skip>그대로 두기</button>
         <button type="button" class="btn small" data-psync-apply>반영</button>
@@ -4293,7 +4293,7 @@
     return changed.length;
   }
 
-  // ── 샷 이미지 프롬프트 자동 반영 ──
+  // ── 이미지 프롬프트 자동 반영 ──
   // 프롬프트를 쓸 때 바탕이 된 내용(컷 설명·스토리보드 연출 메모·기획 전체)을 기억해 두고(koSrc),
   // 그게 바뀌면 묻지 않고 바뀐 점만 반영해 고쳐 쓴다. 고치기 전 프롬프트는 ↶ 로 되돌릴 수 있다.
   const autoShotPrompts = () => state.autoShotPrompts !== false;
@@ -4347,12 +4347,12 @@
     promptSync.busy = new Set(stale.map((x) => x.s.id));
     aiBusy = true;
     if (["shots", "video"].includes(activeTab())) renderActive();
-    toast(`기획·스토리보드가 바뀌어 샷 이미지 프롬프트 ${stale.length}컷을 고쳐 쓰는 중…`);
+    toast(`기획·스토리보드가 바뀌어 이미지 프롬프트 ${stale.length}컷을 고쳐 쓰는 중…`);
     try {
       const n = await redraftShots(p, stale.map((x) => x.s), "image", [...globLines, ...cutLines].join("\n"));
       for (const [s, src] of srcs) s.koSrc = src;
       save({ undo: false });
-      toast(n ? `샷 이미지 프롬프트 ${n}컷을 바뀐 내용에 맞게 고쳐 썼어요 (카드의 ↶ 이전 프롬프트로 되돌리기)` : "샷 이미지 프롬프트는 바꿀 곳이 없었어요");
+      toast(n ? `이미지 프롬프트 ${n}컷을 바뀐 내용에 맞게 고쳐 썼어요 (카드의 ↶ 이전 프롬프트로 되돌리기)` : "이미지 프롬프트는 바꿀 곳이 없었어요");
     } catch (err) {
       promptSync.failAt = Date.now();
       toast(`샷 프롬프트 자동 반영 실패: ${aiErrorText(err)}`);
@@ -4377,7 +4377,7 @@
     if (!c) return;
     state.autoShotPrompts = c.checked;
     save({ undo: false });
-    toast(c.checked ? "기획·스토리보드가 바뀌면 샷 이미지 프롬프트를 자동으로 고쳐 써요" : "자동 반영을 껐어요. 기획을 바꾸면 아래 막대에서 물어봐요");
+    toast(c.checked ? "기획·스토리보드가 바뀌면 이미지 프롬프트를 자동으로 고쳐 써요" : "자동 반영을 껐어요. 기획을 바꾸면 아래 막대에서 물어봐요");
     if (c.checked) { staleShotPrompts(current()).length && schedulePromptSync(300); }
     renderActive();
   });
@@ -4391,7 +4391,7 @@
     const step = (msg) => { planSync.busy = msg; renderPlanSync(); };
     try {
       aiBusy = true;
-      if (o.img && tg.img.length) { step(`샷 이미지 프롬프트 ${tg.img.length}컷을 고쳐 쓰는 중…`); done.push(`샷 프롬프트 ${await redraftShots(p, tg.img, "image", why)}컷`); }
+      if (o.img && tg.img.length) { step(`이미지 프롬프트 ${tg.img.length}컷을 고쳐 쓰는 중…`); done.push(`샷 프롬프트 ${await redraftShots(p, tg.img, "image", why)}컷`); }
       if (o.vid && tg.vid.length) { step(`영상 프롬프트 ${tg.vid.length}컷을 고쳐 쓰는 중…`); done.push(`영상 프롬프트 ${await redraftShots(p, tg.vid, "video", why)}컷`); }
       aiBusy = false;
       if (o.board && tg.board.length) {
@@ -4510,7 +4510,7 @@
     }
   }
 
-  function autoPromptBar(kind, shots) {
+  function autoPromptBar(kind, shots, { picker = true } = {}) {
     const p = current();
     const isVideo = kind === "video";
     const missing = shots.filter((s) => (isVideo ? !s.videos.length && anchorOf(s) : !s.images.length)).length;
@@ -4523,11 +4523,41 @@
       ${!isVideo ? `<label class="inline small-check" title="기획(컨셉·룩·키컬러·캐릭터·장면)이나 스토리보드(컷 설명·연출)가 바뀌면, 바뀐 점만 반영해 이 컷들의 프롬프트를 알아서 고쳐 써요"><input type="checkbox" data-auto-shotprompt ${autoShotPrompts() ? "checked" : ""} /> 자동 반영</label>` : ""}
       <button type="button" class="btn ghost small${termUi.dock ? " on" : ""}" data-term-dock title="샷·카메라·연출·모션·디자인 용어를 옆에 띄워 클릭으로 넣기">📖 용어 사전</button>
       <span class="spacer"></span>
-      ${true ? `<span class="picker-label">${isVideo ? "기본 영상 모델" : "이미지 모델"}</span>${hfPicker(isVideo ? "video" : "shots")}` : ""}
+      ${picker ? `<span class="picker-label">${isVideo ? "기본 영상 모델" : "이미지 모델"}</span>${hfPicker(isVideo ? "video" : "shots")}` : ""}
     </div>`;
   }
 
-  // 샷 이미지: 영상화와 같은 구조 — 왼쪽 컷 목록, 오른쪽 고른 컷(스케치 → 고른 이미지 · 레퍼런스 · 프롬프트 · 결과 · 엔드 프레임)
+  // ── 스튜디오 레이아웃 (이미지화 · 영상화 공통) ──
+  // 왼쪽 = 컷 목록 · 가운데 = 큰 미리보기 → 결과 → 프롬프트 · 오른쪽 = 설정(모델 · 구도 · 레퍼런스 · 프레임)
+  const stSec = (title, body, aside = "") => `<section class="st-sec">${title ? `<header class="st-sec-head"><h4>${title}</h4>${aside}</header>` : ""}${body}</section>`;
+  function stHead({ no, title, points = [], nav = "", cta = "" }) {
+    return `<header class="st-head">
+      <div class="st-title"><span class="st-no">${no}</span><h2>${esc(title)}</h2>
+        ${points.length ? `<div class="st-points">${points.map((x) => `<span>${esc(x)}</span>`).join("")}</div>` : ""}</div>
+      <div class="st-actions">${nav}${cta}</div>
+    </header>`;
+  }
+  const stNav = (attr, i, n) => `<div class="st-nav"><button type="button" class="ph-btn" ${attr}="-1" ${i ? "" : "disabled"} aria-label="이전 컷">‹</button><span>${i + 1} / ${n}</span><button type="button" class="ph-btn" ${attr}="1" ${i < n - 1 ? "" : "disabled"} aria-label="다음 컷">›</button></div>`;
+  // 큰 미리보기: 이미지(영상이면 ▶ 눌러 재생 — 라이트박스)
+  function stStage(id, { empty = "", badge = "", video = false } = {}) {
+    return `<div class="st-stage${id ? "" : " empty"}">${id
+      ? `<img data-img-id="${esc(id)}" alt="" title="${video ? "눌러서 재생" : "크게 보기"}" />${video ? `<span class="st-play" aria-hidden="true">▶</span>` : ""}`
+      : `<div class="st-empty">${empty}</div>`}${badge ? `<span class="st-badge">${badge}</span>` : ""}</div>`;
+  }
+  // 오른쪽 위 주 버튼: 지금 모델로 만들기 (웹 모델이면 복사 · 열기)
+  function genCta(kind, s) {
+    const isVid = kind === "video", m = isVid ? hfModelFor("video", s) : hfModelFor("shots");
+    const busy = (isVid ? videoGenBusy : shotGenBusy).has(s.id), attr = isVid ? "data-gen-video" : "data-gen-shot";
+    if (isVid && !anchorOf(s)) return "";
+    if (isWebModel(m)) {
+      const ready = isVid ? str(s.ven) && !isStale({ obj: s, ko: "vko", en: "ven" }) : str(s.en) && !isStale({ obj: s, ko: "ko", en: "en" });
+      return `<button type="button" class="btn st-cta web" ${attr} ${busy ? "disabled" : ""}>${busy ? `<span class="mini-spin"></span>준비 중…` : `↗ ${ready ? `${esc(m.name)} 열기` : "프롬프트 만들고 열기"}`}</button>`;
+    }
+    if (!genReady(m)) return "";
+    return `<button type="button" class="btn st-cta" ${attr} ${busy ? "disabled" : ""}>${busy ? `<span class="mini-spin"></span>생성 중…` : `✨ ${isVid ? "영상" : "이미지"} 만들기<small>${esc(m.name)}</small>`}</button>`;
+  }
+
+  // ── 5 이미지화 ──
   let sxSel = null;
   function sxPromptState(s) {
     if (str(s.en) && !isStale({ obj: s, ko: "ko", en: "en" })) return ["ok", "프롬프트"];
@@ -4546,9 +4576,10 @@
     const i = shots.findIndex((x) => x.id === sxSel), s = shots[i], pick = anchorOf(s);
     const b = briefOf(s) || fallbackBrief(s), done = shots.filter((x) => x.images.length).length;
     const listScroll = $("#shotsBody .vx-list-body")?.scrollTop || 0;
+    const on = useBoardRef(s);
     $("#shotsBody").innerHTML = `
-      ${autoPromptBar("image", shots)}
-      <div class="vx">
+      ${autoPromptBar("image", shots, { picker: false })}
+      <div class="studio">
         <aside class="vx-list card" aria-label="컷 목록">
           <div class="vx-list-head"><b>컷 ${shots.length}</b><span class="vx-prog"><i style="width:${(done / shots.length) * 100}%"></i></span><small>이미지 ${done}/${shots.length}</small></div>
           <div class="vx-list-body">${shots.map((x, k) => {
@@ -4557,44 +4588,28 @@
               <span class="vx-thumb">${an ? `<img data-img-id="${esc(an)}" alt="" draggable="false" />` : x.board?.svg ? `<img src="${svgUrl(x.board.svg)}" alt="" class="sketch" draggable="false" />` : `<i>스케치 없음</i>`}<b class="vx-num">${pad2(k + 1)}</b><s class="vx-dur">${x.duration}s</s>${shotGenBusy.has(x.id) ? `<span class="vx-busy"><span class="mini-spin"></span></span>` : ""}</span>
               <span class="vx-meta">
                 <b><span>${pad2(k + 1)}</span>${esc((briefOf(x) || fallbackBrief(x)).title || x.type)}</b>
-                <small>${x.duration}초 · ${esc(x.type)}</small>
                 <span class="vx-tags"><i class="dot ${ps}"></i>${pl}${x.images.length ? ` · 이미지 ${x.images.length}` : ""}${shotPromptBadge(x) ? " · 곧 반영" : ""}</span>
               </span></button>`;
           }).join("")}</div>
         </aside>
 
-        <section class="vx-detail card" data-shot-id="${esc(s.id)}" aria-label="컷 ${i + 1}">
-          <header class="vx-head">
-            <div class="vx-title"><span class="vx-no">CUT ${pad2(i + 1)} · ${s.duration}초</span><h2>${esc(b.title || s.type)}</h2>
-              ${b.points.length ? `<p>${esc(b.points.join(" · "))}</p>` : ""}</div>
-            <div class="vx-nav">
-              <button type="button" class="ph-btn" data-sx-step="-1" ${i ? "" : "disabled"} aria-label="이전 컷">‹</button>
-              <button type="button" class="ph-btn" data-sx-step="1" ${i < shots.length - 1 ? "" : "disabled"} aria-label="다음 컷">›</button>
-            </div>
-          </header>
-
-          <div class="vx-frames">
-            <figure class="vx-frame">
-              <figcaption>스토리보드</figcaption>
-              <div class="vx-img sketch-box${useBoardRef(s) ? " as-ref" : ""}">${s.board?.svg ? `<img src="${svgUrl(s.board.svg)}" alt="스케치" />
-                <button type="button" class="sketch-ref${useBoardRef(s) ? " on" : ""}" data-board-ref aria-pressed="${useBoardRef(s)}" title="체크하면 이 스케치의 배치·샷 크기·앵글을 따라 그려요"><i aria-hidden="true">${useBoardRef(s) ? "✓" : ""}</i>레퍼런스</button>` : `<span class="vx-empty-in">스케치가 없어요</span>`}</div>
-            </figure>
-            <span class="vx-arrow" aria-hidden="true">→</span>
-            <figure class="vx-frame">
-              <figcaption>고른 이미지 <small>${s.images.length > 1 ? `★ ${s.images.length}장 중` : ""}</small></figcaption>
-              ${pick ? `<div class="vx-img"><img data-img-id="${esc(pick)}" alt="고른 샷 이미지" title="크게 보기" /></div>` : `<div class="vx-img vx-empty">아직 이미지가 없어요</div>`}
-            </figure>
+        <section class="st-main" data-shot-id="${esc(s.id)}" aria-label="컷 ${i + 1}">
+          ${stHead({ no: `CUT ${pad2(i + 1)} · ${s.duration}초 · ${esc(s.type)}`, title: b.title || s.type, points: b.points, nav: stNav("data-sx-step", i, shots.length), cta: genCta("image", s) })}
+          ${stStage(pick, { empty: `<b>아직 이미지가 없어요</b><span>오른쪽 위 <b>만들기</b>를 누르거나, 다른 곳에서 만든 이미지를 끌어다 놓거나 Ctrl+V</span>`, badge: s.images.length > 1 ? `★ ${s.images.indexOf(pick) + 1} / ${s.images.length}` : "" })}
+          <div class="st-variants">
+            <div class="st-label"><b>결과</b><small>${s.images.length ? "★ 고른 이미지가 애니메틱 · 영상화의 시작 프레임이 돼요" : "만든 이미지가 여기 쌓여요"}</small></div>
+            <div class="cut-results">${mediaGrid(s, `shot:${s.id}`, "images", { pickable: true, addLabel: "올리기" })}</div>
           </div>
-
-          ${refsRow(p, s)}
           ${promptCard(`shot:${s.id}:img`, { placeholder: "피사체, 배경, 구도, 빛, 팔레트, 스타일 + 필수·금지" })}
-
-          <div class="vx-results">
-            <div class="vx-sub"><b>결과</b><small>${s.images.length ? "★ 고른 이미지가 애니메틱·영상화의 시작 프레임이 돼요" : "만들거나, 다른 곳에서 만든 이미지를 올려요 (Ctrl+V)"}</small></div>
-            <div class="cut-results">${mediaGrid(s, `shot:${s.id}`, "images", { pickable: true, addLabel: "이미지 올리기" })}${shotGenTile(s)}</div>
-          </div>
-          ${endFrameRow(s)}
         </section>
+
+        <aside class="st-insp card" data-shot-id="${esc(s.id)}" aria-label="설정">
+          ${stSec("이미지 모델", hfPicker("shots"))}
+          ${stSec("스토리보드 구도", `<div class="st-sketch${on ? " on" : ""}">${s.board?.svg ? `<img src="${svgUrl(s.board.svg)}" alt="스토리보드 스케치" />` : `<span>스케치가 없어요</span>`}</div>`,
+            s.board?.svg ? `<button type="button" class="st-switch${on ? " on" : ""}" data-board-ref aria-pressed="${on}" title="켜면 이 스케치의 배치 · 샷 크기 · 앵글을 따라 그려요"><i aria-hidden="true"></i>따라 그리기</button>` : "")}
+          ${stSec("", refsRow(p, s))}
+          ${stSec("", endFrameRow(s))}
+        </aside>
       </div>`;
     const lb = $("#shotsBody .vx-list-body");
     if (lb) lb.scrollTop = listScroll;
@@ -4647,7 +4662,7 @@
       : busy ? `<button type="button" class="gen-tile" disabled><span class="mini-spin"></span>${isWebModel(im) ? "프롬프트 준비 중…" : "만드는 중…"}</button>`
       : isWebModel(im) ? `<button type="button" class="gen-tile web" data-gen-end><b>↗</b>${s.endEn ? `${esc(im.name)} 열기` : `프롬프트 만들고 ${esc(im.name)}`}</button>`
       : genReady(im) ? `<button type="button" class="gen-tile" data-gen-end><b>✨</b>${has ? "한 장 더" : "엔드 프레임 만들기"}</button>` : "";
-    const note = !anchor ? "샷 이미지(시작 프레임)를 고르면 이어지는 끝 장면을 만들 수 있어요."
+    const note = !anchor ? "이미지(시작 프레임)를 고르면 이어지는 끝 장면을 만들 수 있어요."
       : !has ? "선택 — 영상이 끝나는 장면. 시작 프레임을 보고 만들어요."
       : s.endPick ? "★ 고른 장면이 영상화의 엔드 프레임 칸에 들어가요." : "★로 고르면 영상화의 엔드 프레임 칸에 들어가요.";
     return `<div class="end-row${has ? " has" : ""}">
@@ -4680,7 +4695,7 @@
     s.endPick = null;
     save();
     renderActive();
-    toast("엔드 프레임을 뺐어요 (후보는 샷 이미지에 남아 있어요)");
+    toast("엔드 프레임을 뺐어요 (후보는 이미지화에 남아 있어요)");
   });
 
   // 시작 프레임(앵커) + 영상 프롬프트로 끝 장면 프롬프트를 쓰고, 샷 이미지 모델로 만든다 (웹 모델이면 복사·열기)
@@ -5055,7 +5070,7 @@
       if (items.length) groups.push({ title: `캐릭터 · ${c.name || "이름 없음"}`, items });
     });
     const shotItems = p.shots.flatMap((x, i) => x.images.map((id) => ({ id, tag: `${pad2(i + 1)}${id === anchorOf(x) ? " 앵커" : ""}${x === s ? " (이 컷)" : ""}` })));
-    if (shotItems.length) groups.push({ title: "샷 이미지 · 앵커", items: shotItems });
+    if (shotItems.length) groups.push({ title: "컷 이미지 · 앵커", items: shotItems });
     if (p.plan.images.length) groups.push({ title: "기획 레퍼런스", items: planRefsOrdered(p.plan).map((id) => ({ id, tag: `${REF_ROLE[refRole(p.plan, id)].icon} ${REF_ROLE[refRole(p.plan, id)].ko}` })) });
     if (s.refFiles.length) groups.push({ title: "이 컷에 올린 이미지", items: s.refFiles.map((id) => ({ id, tag: "" })) });
     return groups;
@@ -5888,7 +5903,7 @@
     box.innerHTML = `
       <div class="insp-tabs" role="tablist">
         <button type="button" role="tab" class="${ed.insp === "cut" ? "on" : ""}" data-insp-tab="cut">컷</button>
-        <button type="button" role="tab" class="${ed.insp === "bin" ? "on" : ""}" data-insp-tab="bin" title="만든 ${isFinal() ? "영상·이미지" : "샷 이미지"}를 골라 넣기">소스</button>
+        <button type="button" role="tab" class="${ed.insp === "bin" ? "on" : ""}" data-insp-tab="bin" title="만든 ${isFinal() ? "영상·이미지" : "컷 이미지"}를 골라 넣기">소스</button>
         <button type="button" role="tab" class="${ed.insp === "notes" ? "on" : ""}" data-insp-tab="notes">메모${notes.length ? ` <em>${open}</em>` : ""}</button>
       </div>
       ${ed.insp === "notes" ? notesPanel() : ed.insp === "bin" ? binPanel() : cutPanel()}`;
@@ -5911,7 +5926,7 @@
             ${off.has(s.id) ? `<button type="button" class="link-btn" data-bin-restore="${esc(s.id)}">다시 넣기</button>` : ""}</div>
           <div class="bin-grid">${media.map((m) => `<button type="button" class="bin-item ${m.kind}${used.has(m.id) ? " used" : ""}" draggable="true" data-bin="${esc(s.id)}|${esc(m.id)}|${m.kind}"
               title="${m.end ? "엔드 프레임 · " : ""}${used.has(m.id) ? `타임라인에 ${used.get(m.id)}개 · ` : ""}눌러서 넣기 · 끌어서 원하는 자리에"><img data-img-id="${esc(m.id)}" alt="" draggable="false" />${m.kind === "video" ? "<i>▶</i>" : m.end ? "<i class=\"end\">끝</i>" : ""}${used.has(m.id) ? `<em>${used.get(m.id)}</em>` : ""}</button>`).join("")
-            || `<span class="bin-empty">${isFinal() ? "영상·이미지가 없어요" : "샷 이미지·엔드 프레임이 없어요"}</span>`}</div>
+            || `<span class="bin-empty">${isFinal() ? "영상·이미지가 없어요" : "컷 이미지·엔드 프레임이 없어요"}</span>`}</div>
         </div>`;
       }).join("")}
     </div>`;
@@ -5936,7 +5951,7 @@
             ${s.images.map((id) => `<button type="button" class="cand ${id === anchor ? "on" : ""}" data-cand="${esc(id)}" title="${id === anchor ? "앵커 (더블클릭: 크게 보기)" : "이걸 앵커로"}"><img data-img-id="${esc(id)}" alt="" draggable="false" /><i>★</i></button>`).join("")}
             <button type="button" class="cand add" data-media-add="shot:${esc(srcShot(s).id)}|images" title="이미지 올리기 · 끌어다 놓기 · Ctrl+V">＋</button>
           </div>
-          ${s.images.length ? "" : `<p class="insp-note">샷 이미지가 없어요. 지금은 스토리보드 스케치로 보여 줘요. <button type="button" class="link-btn" data-goto="shots">샷 이미지로</button></p>`}
+          ${s.images.length ? "" : `<p class="insp-note">컷 이미지가 없어요. 지금은 스토리보드 스케치로 보여 줘요. <button type="button" class="link-btn" data-goto="shots">이미지화로</button></p>`}
         </div>`;
     const takeSec = `
         <div class="insp-sec">
@@ -6465,50 +6480,34 @@
     const sec = m.web ? Math.round(c.vidSec || c.duration) : fitDuration(m, c.vidSec || c.duration), r = sec / c.duration;
     const opt = (sel) => all.map((s, k) => `<option value="${esc(s.id)}" ${s.id === sel ? "selected" : ""}>컷 ${pad2(k + 1)}</option>`).join("");
     const outdated = str(c.vko) && c.draftRange && c.draftRange !== comboKey(p);
+    const cta = !start ? "" : isWebModel(m)
+      ? `<button type="button" class="btn st-cta web" data-gen-combo ${comboBusy ? "disabled" : ""}>${comboBusy ? `<span class="mini-spin"></span>준비 중…` : `↗ ${str(c.ven) && !isStale({ obj: c, ko: "vko", en: "ven" }) ? `${esc(m.name)} 열기` : "프롬프트 만들고 열기"}`}</button>`
+      : genReady(m) ? `<button type="button" class="btn st-cta" data-gen-combo ${comboBusy ? "disabled" : ""}>${comboBusy ? `<span class="mini-spin"></span>생성 중…` : `✨ 한 번에 만들기<small>${esc(m.name)} · ${sec}초</small>`}</button>` : "";
     let t = 0;
-    return `<section class="vx-detail card" data-shot-id="combo" aria-label="여러 컷 한 영상">
-      <header class="vx-head">
-        <div class="vx-title"><span class="vx-no">CUT ${pad2(a + 1)} ~ ${pad2(b + 1)} · 한 영상으로</span><h2>컷 ${shots.length}개 → 영상 1개</h2>
-          <p>합계 ${Number(c.duration.toFixed(1))}초 · 만든 영상은 컷 길이대로 나뉘어 애니메틱 · 편집 타임라인에 들어가요</p></div>
-        <div class="vx-range" title="한 영상으로 만들 컷 범위 — 왼쪽 목록에서 눌러도 돼요">
-          <select data-combo-from aria-label="시작 컷">${opt(c.from)}</select><span>~</span><select data-combo-to aria-label="끝 컷">${opt(c.to)}</select>
-          <button type="button" class="btn ghost small" data-combo-all>전체</button></div>
-      </header>
-
-      <div class="combo-strip" aria-label="컷 나눔">${shots.map((s) => {
-        const k = all.indexOf(s), an = anchorOf(s), t0 = t * r;
-        t += s.duration;
-        return `<div class="cs-cut" style="flex:${s.duration}"><span class="cs-img">${an ? `<img data-img-id="${esc(an)}" alt="" />` : `<i>앵커 없음</i>`}<b>${pad2(k + 1)}</b></span><small>${t0.toFixed(1)}–${(t * r).toFixed(1)}s</small></div>`;
-      }).join("")}</div>
-
-      <div class="vx-frames">
-        <figure class="vx-frame">
-          <figcaption>시작 프레임 <small>컷 ${pad2(a + 1)}</small></figcaption>
-          ${start ? `<div class="vx-img"><img data-img-id="${esc(start)}" alt="시작 프레임" title="크게 보기" /></div>`
-            : `<button type="button" class="vx-img vx-empty" data-goto="select">컷 ${pad2(a + 1)}에 앵커 이미지가 없어요<br><b>애니메틱에서 고르기 →</b></button>`}
-        </figure>
-        <span class="vx-arrow" aria-hidden="true">→</span>
-        <figure class="vx-frame">
-          <figcaption>엔드 프레임 <small>${shots.length > 1 ? `컷 ${pad2(b + 1)}` : "선택"}</small>
-            ${m.end && shots.length > 1 ? `<label class="inline small-check combo-end"><input type="checkbox" data-combo-end ${c.useEnd !== false ? "checked" : ""} /> 마지막 컷으로 끝내기</label>` : ""}</figcaption>
-          ${end ? `<div class="vx-img"><img data-img-id="${esc(end)}" alt="엔드 프레임" title="크게 보기" /></div>`
-            : `<div class="vx-img vx-empty-in">${shots.length < 2 ? "컷을 둘 이상 고르면 마지막 컷으로 끝낼 수 있어요" : !m.end ? `${esc(m.name)}는 엔드 프레임을 받지 않아요` : "프롬프트대로 끝나요"}</div>`}
-        </figure>
-      </div>
-
-      <div class="vx-settings">
-        <div class="cut-model">${hfPicker("video", c)}</div>
-        ${vidOpts(c)}
-      </div>
-
-      ${outdated ? `<p class="combo-warn">컷 범위가 바뀌었어요 — <b>✨ AI 초안</b>으로 다시 쓰면 지금 컷들로 맞춰져요</p>` : ""}
-      ${promptCard("shot:combo:vid", { placeholder: "[0~2초] 컷 1 … → [2~4초] 컷 2 … 처럼 시간 순서로 (✨ AI 초안이 컷마다 나눠 써 줘요)" })}
-
-      <div class="vx-results">
-        <div class="vx-sub"><b>결과</b><small>${c.videos.length ? `${c.videos.length}개 · ★ 고른 영상이 컷마다 나뉘어 들어가요` : `${esc(m.name)}로 한 번에 만들거나, 다른 곳에서 만든 영상을 올려요`}</small></div>
-        <div class="cut-results">${mediaGrid(c, "combo", "videos", { pickable: true, addLabel: "영상 올리기" })}${start ? comboGenTile(p) : ""}</div>
-      </div>
-    </section>`;
+    return `<section class="st-main" data-shot-id="combo" aria-label="여러 컷 한 영상">
+        ${stHead({ no: `CUT ${pad2(a + 1)} ~ ${pad2(b + 1)} · 한 영상으로`, title: `컷 ${shots.length}개 → 영상 1개`, points: [`합계 ${Number(c.duration.toFixed(1))}초`, "컷 길이대로 나뉘어 타임라인에 들어가요"], cta })}
+        <div class="combo-strip" aria-label="컷 나눔">${shots.map((s) => {
+          const k = all.indexOf(s), an = anchorOf(s), t0 = t * r;
+          t += s.duration;
+          return `<div class="cs-cut" style="flex:${s.duration}"><span class="cs-img">${an ? `<img data-img-id="${esc(an)}" alt="" />` : `<i>앵커 없음</i>`}<b>${pad2(k + 1)}</b></span><small>${t0.toFixed(1)}–${(t * r).toFixed(1)}s</small></div>`;
+        }).join("")}</div>
+        ${stStage(c.take || start, { video: !!c.take, empty: `<b>컷 ${pad2(a + 1)}에 앵커 이미지가 없어요</b><button type="button" class="link-btn" data-goto="select">애니메틱에서 고르기 →</button>`, badge: c.take ? "▶ 고른 영상" : start ? "시작 프레임" : "" })}
+        <div class="st-variants">
+          <div class="st-label"><b>결과</b><small>${c.videos.length ? "★ 고른 영상이 컷마다 나뉘어 들어가요" : "만든 영상이 여기 쌓여요"}</small></div>
+          <div class="cut-results">${mediaGrid(c, "combo", "videos", { pickable: true, addLabel: "올리기" })}</div>
+        </div>
+        ${outdated ? `<p class="combo-warn">컷 범위가 바뀌었어요 — <b>✨ AI 초안</b>으로 다시 쓰면 지금 컷들로 맞춰져요</p>` : ""}
+        ${promptCard("shot:combo:vid", { placeholder: "[0~2초] 컷 1 … → [2~4초] 컷 2 … 처럼 시간 순서로 (✨ AI 초안이 컷마다 나눠 써 줘요)" })}
+      </section>
+      <aside class="st-insp card" data-shot-id="combo" aria-label="설정">
+        ${stSec("컷 범위", `<div class="vx-range"><select data-combo-from aria-label="시작 컷">${opt(c.from)}</select><span>~</span><select data-combo-to aria-label="끝 컷">${opt(c.to)}</select><button type="button" class="btn ghost small" data-combo-all>전체</button></div><p class="st-hint">왼쪽 목록을 눌러도 늘리고 줄일 수 있어요</p>`)}
+        ${stSec("영상 모델", hfPicker("video", c))}
+        ${stSec("길이 · 사이즈", vidOpts(c))}
+        ${stSec("시작 · 끝 프레임", `<div class="st-frames">
+            <figure><span class="st-fig">${start ? `<img data-img-id="${esc(start)}" alt="시작 프레임" />` : `<i>없음</i>`}</span><figcaption>시작 · 컷 ${pad2(a + 1)}</figcaption></figure>
+            <figure><span class="st-fig">${end ? `<img data-img-id="${esc(end)}" alt="엔드 프레임" />` : `<i>${shots.length < 2 ? "컷 2개 이상" : !m.end ? "못 받는 모델" : "프롬프트대로"}</i>`}</span><figcaption>끝 · ${shots.length > 1 ? `컷 ${pad2(b + 1)}` : "선택"}</figcaption></figure>
+          </div>${m.end && shots.length > 1 ? `<label class="inline small-check"><input type="checkbox" data-combo-end ${c.useEnd !== false ? "checked" : ""} /> 마지막 컷 이미지로 끝내기</label>` : ""}`)}
+      </aside>`;
   }
 
   function renderVideo() {
@@ -6523,12 +6522,12 @@
     const inCombo = combo ? new Set(comboShots(p).map((s) => s.id)) : null;
     if (!shots.some((s) => s.id === vxSel)) vxSel = (shots.find((s) => !s.take && anchorOf(s)) || shots[0]).id;
     const i = shots.findIndex((s) => s.id === vxSel), s = shots[i], anchor = anchorOf(s);
-    const b = briefOf(s) || fallbackBrief(s), m = hfModelFor("video", s);
+    const b = briefOf(s) || fallbackBrief(s);
     const listScroll = $("#videoBody .vx-list-body")?.scrollTop || 0;
     $("#videoBody").innerHTML = `
       ${combo ? `<div class="toolbar card"><span class="hint">러닝타임이 짧으면 여러 컷을 한 번에 — 컷 흐름이 자연스럽게 이어지고 생성도 한 번이에요</span><span class="spacer"></span>
         <button type="button" class="btn ghost small${termUi.dock ? " on" : ""}" data-term-dock title="샷·카메라·연출·모션·디자인 용어를 옆에 띄워 클릭으로 넣기">📖 용어 사전</button></div>` : autoPromptBar("video", shots)}
-      <div class="vx">
+      <div class="studio">
         <aside class="vx-list card" aria-label="컷 목록">
           <div class="vx-mode seg" role="tablist" aria-label="영상화 방식">
             <button type="button" role="tab" data-vx-mode="cut" class="${combo ? "" : "on"}" aria-selected="${!combo}">컷별로</button>
@@ -6536,54 +6535,35 @@
           </div>
           <div class="vx-list-head"><b>컷 ${shots.length}</b><span class="vx-prog"><i style="width:${(takes / shots.length) * 100}%"></i></span><small>${combo ? `${inCombo.size}컷 선택` : `영상 ${takes}/${shots.length}`}</small></div>
           <div class="vx-list-body">${shots.map((x, k) => {
-            const an = anchorOf(x), [ps, pl] = vxPromptState(x), xm = hfModelFor("video", x), z = vidSizeOf(x);
+            const an = anchorOf(x), [ps, pl] = vxPromptState(x);
             const cls = combo ? (inCombo.has(x.id) ? " in" : " out") : x.id === vxSel ? " on" : "";
             return `<button type="button" class="vx-row${cls}" data-vx-sel="${esc(x.id)}" ${combo ? `title="${inCombo.has(x.id) ? "누르면 여기까지로 줄여요" : "누르면 여기까지 늘려요"}"` : ""}>
               <span class="vx-thumb">${an ? `<img data-img-id="${esc(an)}" alt="" draggable="false" />` : `<i>앵커 없음</i>`}<b class="vx-num">${pad2(k + 1)}</b><s class="vx-dur">${x.vidSec || Math.round(x.duration)}s</s>${x.take ? `<em title="영상 있음">▶</em>` : ""}${videoGenBusy.has(x.id) ? `<span class="vx-busy"><span class="mini-spin"></span></span>` : ""}</span>
               <span class="vx-meta">
                 <b><span>${pad2(k + 1)}</span>${esc((briefOf(x) || fallbackBrief(x)).title || x.type)}</b>
-                <small>${esc(xm.name)} · ${x.vidSec || Math.round(x.duration)}초${z ? ` · ${sizeLabel(z)}` : ""}</small>
                 <span class="vx-tags"><i class="dot ${ps}"></i>${pl}${x.videos.length ? ` · 영상 ${x.videos.length}` : ""}${endOf(x) ? " · 끝 프레임" : ""}</span>
               </span></button>`;
           }).join("")}</div>
           ${takes ? `<button type="button" class="btn small full vx-final" data-goto="edit">▶ 최종 영상 미리보기</button>` : ""}
         </aside>
 
-        ${combo ? renderComboDetail(p) : `<section class="vx-detail card" data-shot-id="${esc(s.id)}" aria-label="컷 ${i + 1}">
-          <header class="vx-head">
-            <div class="vx-title"><span class="vx-no">CUT ${pad2(i + 1)}</span><h2>${esc(b.title || s.type)}</h2>
-              ${b.points.length ? `<p>${esc(b.points.join(" · "))}</p>` : ""}</div>
-            <div class="vx-nav">
-              <button type="button" class="ph-btn" data-vx-step="-1" ${i ? "" : "disabled"} aria-label="이전 컷">‹</button>
-              <button type="button" class="ph-btn" data-vx-step="1" ${i < shots.length - 1 ? "" : "disabled"} aria-label="다음 컷">›</button>
-            </div>
-          </header>
-
-          <div class="vx-frames">
-            <figure class="vx-frame">
-              <figcaption>시작 프레임 ${anchor ? `<button type="button" class="link-btn" data-anchor-dl="${esc(anchor)}" data-n="${i + 1}">저장</button>` : ""}</figcaption>
-              ${anchor ? `<div class="vx-img"><img data-img-id="${esc(anchor)}" alt="시작 프레임" title="크게 보기" /></div>`
-                : `<button type="button" class="vx-img vx-empty" data-goto="select">앵커 이미지가 없어요<br><b>애니메틱에서 고르기 →</b></button>`}
-            </figure>
-            <span class="vx-arrow" aria-hidden="true">→</span>
-            <figure class="vx-frame end">
-              <figcaption>엔드 프레임 <small>선택</small></figcaption>
-              ${anchor ? endSlot(s) : `<div class="vx-img vx-empty">시작 프레임이 있어야 해요</div>`}
-            </figure>
+        ${combo ? renderComboDetail(p) : `<section class="st-main" data-shot-id="${esc(s.id)}" aria-label="컷 ${i + 1}">
+          ${stHead({ no: `CUT ${pad2(i + 1)} · ${s.vidSec || Math.round(s.duration)}초`, title: b.title || s.type, points: b.points, nav: stNav("data-vx-step", i, shots.length), cta: genCta("video", s) })}
+          ${stStage(s.take || anchor, { video: !!s.take, empty: `<b>앵커 이미지가 없어요</b><span>시작 프레임이 될 이미지를 먼저 골라 주세요</span><button type="button" class="link-btn" data-goto="select">애니메틱에서 고르기 →</button>`, badge: s.take ? "▶ 고른 영상" : anchor ? "시작 프레임" : "" })}
+          <div class="st-variants">
+            <div class="st-label"><b>결과</b><small>${s.videos.length ? "★ 고른 영상을 편집에 써요" : "만든 영상이 여기 쌓여요"}</small></div>
+            <div class="cut-results">${mediaGrid(s, `shot:${s.id}`, "videos", { pickable: true, addLabel: "올리기" })}</div>
           </div>
-
-          <div class="vx-settings">
-            <div class="cut-model">${hfPicker("video", s)}</div>
-            ${vidOpts(s)}
-          </div>
-
           ${promptCard(`shot:${s.id}:vid`, { placeholder: "시간 순서의 움직임 + 카메라 움직임 + 금지(스타일 변화 등)" })}
-
-          <div class="vx-results">
-            <div class="vx-sub"><b>결과</b><small>${s.videos.length ? `${s.videos.length}개 · ★ 고른 영상을 편집에 써요` : `${esc(m.name)}로 만들거나, 다른 곳에서 만든 영상을 올려요`}</small></div>
-            <div class="cut-results">${mediaGrid(s, `shot:${s.id}`, "videos", { pickable: true, addLabel: "영상 올리기" })}${anchor ? videoGenTile(s) : ""}</div>
-          </div>
-        </section>`}
+        </section>
+        <aside class="st-insp card" data-shot-id="${esc(s.id)}" aria-label="설정">
+          ${stSec("영상 모델", hfPicker("video", s))}
+          ${stSec("길이 · 사이즈", vidOpts(s))}
+          ${stSec("시작 · 끝 프레임", `<div class="st-frames">
+              <figure><span class="st-fig">${anchor ? `<img data-img-id="${esc(anchor)}" alt="시작 프레임" />` : `<i>없음</i>`}</span><figcaption>시작 ${anchor ? `<button type="button" class="link-btn" data-anchor-dl="${esc(anchor)}" data-n="${i + 1}">저장</button>` : ""}</figcaption></figure>
+              <figure>${anchor ? endSlot(s) : `<span class="st-fig"><i>시작 먼저</i></span><figcaption>끝</figcaption>`}</figure>
+            </div>`)}
+        </aside>`}
       </div>`;
     const lb = $("#videoBody .vx-list-body");
     if (lb) lb.scrollTop = listScroll;
@@ -6960,7 +6940,7 @@ ${notes.map(({ n, t: nt }, k) => `    { t: ${nt.toFixed(3)}, text: ${jsx(`${k + 
       } },
     { id: "style", label: "스타일프레임", claude: true, hf: true, stage: "style", done: (p) => !!p.style.pick, run: () => autoStyleFrame() },
     { id: "prompts", label: "샷 프롬프트", claude: true, done: (p) => p.shots.length > 0 && p.shots.every((s) => enFresh(s, "ko", "en")), run: () => autoPrompts("image") },
-    { id: "images", label: "샷 이미지", hf: true, optional: true, stage: "shots", done: (p) => p.shots.length > 0 && p.shots.every((s) => s.images.length),
+    { id: "images", label: "이미지화", hf: true, optional: true, stage: "shots", done: (p) => p.shots.length > 0 && p.shots.every((s) => s.images.length),
       run: (p) => generateShotImages(p, p.shots.filter((s) => !s.images.length)) },
     { id: "vprompts", label: "영상 프롬프트", claude: true, done: (p) => p.shots.length > 0 && p.shots.every((s) => !anchorOf(s) || enFresh(s, "vko", "ven")), run: () => autoPrompts("video") }
   ];
