@@ -64,14 +64,23 @@
   .tabs button.on { background: var(--navy); color: #fff; box-shadow: none; }
 
   .ways { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .way { padding: 30px; border-radius: 20px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 10px; }
-  .way.feature { box-shadow: 0 0 0 2px var(--accent); }
-  .way h3 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
-  .way .tag { align-self: flex-start; padding: 3px 10px; border-radius: 99px; background: var(--soft); color: var(--accent-text); font-size: 12.5px; font-weight: 700; }
-  .way ul { margin: 4px 0 8px; padding: 0; list-style: none; display: grid; gap: 8px; }
-  .way li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 15px; color: var(--muted); }
-  .way li::before { content: "✓"; color: var(--accent); font-weight: 800; }
-  .way li.no::before { content: "–"; color: var(--faint); }
+  .ways { max-width: 980px; margin: 0 auto; }
+  .way { padding: 32px; border-radius: 22px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 12px 30px rgba(15, 28, 63, .05); display: flex; flex-direction: column; gap: 20px; }
+  .way.feature { box-shadow: 0 0 0 2px var(--accent), 0 12px 30px rgba(47, 107, 242, .1); }
+  .way-top { display: grid; gap: 8px; justify-items: start; }
+  .way h3 { margin: 4px 0 0; font-size: 24px; line-height: 1.3; letter-spacing: -0.03em; }
+  .way-desc { margin: 0; font-size: 15.5px; color: var(--muted); }
+  .way .tag { padding: 4px 11px; border-radius: 99px; background: var(--soft); color: var(--accent-text); font-size: 12.5px; font-weight: 700; }
+  .checks, .setup { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+  .checks li, .setup li { display: flex; align-items: flex-start; gap: 12px; font-size: 15.5px; line-height: 1.55; }
+  .checks li > span, .setup li > span { flex: 1; min-width: 0; }
+  .checks li::before { content: ""; flex: none; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232f6bf2' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center / 13px no-repeat; }
+  .setup { counter-reset: st; padding: 18px; border-radius: 14px; background: var(--bg); }
+  .setup li { counter-increment: st; }
+  .setup li::before { content: counter(st); flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 800; }
+  .setup small { display: block; margin-top: 2px; color: var(--faint); font-size: 13.5px; }
+  .way code { font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; padding: 1px 6px; border-radius: 6px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+  .way-note { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--bg); font-size: 14px; color: var(--muted); }
   .way .btn { margin-top: auto; align-self: flex-start; }
 
   .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
@@ -163,28 +172,29 @@
     <div class="wrap">
       <div class="sec-head"><span class="eyebrow">시작하기</span><h2>두 가지 방법으로 쓸 수 있어요</h2></div>
       <div class="ways">
-        <div class="way">
-          <span class="tag">가장 쉬움</span>
-          <h3>웹에서 바로</h3>
-          <ul>
-            <li>설치 없이 링크로 열기</li>
-            <li>OpenAI · Gemini · Claude <b>API 키</b>로 기획 · 프롬프트 · 이미지</li>
-            <li>Higgsfield · Midjourney 등은 <b>웹에서 직접</b> (프롬프트 복사 → 사이트)</li>
-            <li class="no">구독 연결 · Higgsfield 자동 생성은 내려받은 버전에서</li>
+        <article class="way">
+          <div class="way-top"><span class="tag">가장 쉬움</span><h3>웹에서 바로</h3><p class="way-desc">링크만 열면 시작해요. AI는 내 API 키로 연결해요.</p></div>
+          <ul class="checks">
+            <li><span>설치 없이 브라우저에서 바로</span></li>
+            <li><span><b>OpenAI · Gemini · Claude API 키</b>로 기획 · 프롬프트 · 이미지</span></li>
+            <li><span>Higgsfield · Midjourney는 프롬프트를 복사해 그 사이트에서 직접</span></li>
           </ul>
+          <p class="way-note">Claude · ChatGPT 구독 연결과 Higgsfield 자동 생성은 내려받은 버전에서 돼요.</p>
           <a class="btn primary" href="app/">앱 열기 →</a>
-        </div>
-        <div class="way feature">
-          <span class="tag">모든 기능</span>
-          <h3>내려받아 실행</h3>
-          <ul>
-            <li><b>Claude · ChatGPT · Gemini 구독</b>을 그대로 연결</li>
-            <li><b>Higgsfield</b> 이미지 · 영상 자동 생성</li>
-            <li>Node.js 설치 후 <b>start.cmd</b>(Mac: start.command) 더블클릭</li>
-            <li>작업과 키는 내 컴퓨터에만</li>
+        </article>
+        <article class="way feature">
+          <div class="way-top"><span class="tag">모든 기능</span><h3>내려받아 실행</h3><p class="way-desc">내 컴퓨터에서 쓰고 있는 구독 계정을 그대로 써요.</p></div>
+          <ul class="checks">
+            <li><span><b>Claude · ChatGPT · Gemini 구독</b> 그대로 연결</span></li>
+            <li><span><b>Higgsfield</b> 이미지 · 영상 자동 생성</span></li>
           </ul>
+          <ol class="setup">
+            <li><span><b>Node.js</b> (LTS) 설치 — 한 번만</span></li>
+            <li><span>압축을 풀고 <code>start.cmd</code> 더블클릭 <small>(Mac: <code>start.command</code>)</small></span></li>
+            <li><span>앱의 <b>AI 연결</b>에서 내 계정 고르기</span></li>
+          </ol>
           <a class="btn ghost" href="app/AI-Motion-Studio.zip" download>⬇ 내려받기 (zip)</a>
-        </div>
+        </article>
       </div>
     </div>
   </section>
